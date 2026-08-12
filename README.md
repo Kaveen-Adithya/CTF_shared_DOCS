@@ -1,6 +1,7 @@
 # CTF_shared_DOCS
 This repo for the SLIIT CTF box
 Hello
+<<<<<<< HEAD
 
 ```text
 ░░░░░░░░░░░░░░░░░░░░░░░░░░
@@ -17,3 +18,6 @@ Hello
 ░░░░░░░░▝▄▄▄▄▄▄▄▄▟░░░░░░░░
 ░░░░░░░░░░░░░░░░░░░░░░░░░░
 ```
+=======
+hi
+>>>>>>> 1ca4673b5f068ddcc27a6d555bfaa5c9a14493ed

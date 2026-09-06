@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+
+{% block title %}Dr. Maya Chan | HelixGrid{% endblock %}
+
+{% block content %}
+
+<section class="profile">
+
+    <div class="profile-top">
+
+        <div class="avatar large">
+            MC
+        </div>
+
+        <div>
+            <div class="eyebrow">
+                PERSONNEL RECORD // HG-021
+            </div>
+
+            <h1>Dr. Maya Chan</h1>
+
+            <p class="muted">
+                Research Scientist · Research & Innovation
+            </p>
+        </div>
+
+    </div>
+
+
+    <div class="profile-grid">
+
+        <!-- Background -->
+
+        <div class="panel">
+
+            <span class="label">
+                BACKGROUND
+            </span>
+
+            <p>
+                Maya worked on applied research and security review
+                activities for several HelixGrid research initiatives.
+            </p>
+
+            <p class="muted">
+                Historical engineering identity: not recorded.
+            </p>
+
+        </div>
+
+
+        <!-- Projects -->
+
+        <div class="panel">
+
+            <span class="label">
+                PROJECT ASSOCIATIONS
+            </span>
+
+            <div class="project-row">
+
+                <b>Aurora Analytics</b>
+
+                <span class="status active">
+                    ACTIVE
+                </span>
+
+            </div>
+
+
+            <div class="project-row">
+
+                <b>ECLIPSE Research Review</b>
+
+                <span class="status archived">
+                    ARCHIVED
+                </span>
+
+            </div>
+
+
+            <div class="project-row">
+
+                <b>HelixVision</b>
+
+                <span class="status active">
+                    ACTIVE
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Archived ECLIPSE Project -->
+
+    <div class="discovery-box">
+
+        <span class="label">
+            ARCHIVED PROJECT RECORD
+        </span>
+
+        <h2>
+            ECLIPSE Research Review
+        </h2>
+
+        <p>
+            A historical security-review project associated with
+            the ECLIPSE research program.
+        </p>
+
+        <a
+            class="primary-btn small"
+            href="/projects/eclipse-review"
+        >
+            Review project record
+            <span>→</span>
+        </a>
+
+    </div>
+
+
+    <a
+        href="/people"
+        class="back-link"
+    >
+        ← Back to personnel
+    </a>
+
+</section>
+
+{% endblock %}

@@ -1,659 +1,854 @@
-Yes. This is a better direction. We can keep the **technical structure of your original 8 challenges**, but replace HelixGrid Laboratories with a realistic **IT company that has a public customer platform, staff portal, payment functionality, internal APIs, servers, and a protected internal network**. 
+# PROJECT ECLIPSE
 
-# 🏢 CTF Story — "Project ECLIPSE: The OrionTech Breach"
+## OrionTech Solutions — Complete CTF Challenge Design
 
-## 1. Company Background
+### CTF Theme
 
-The fictional company is:
+**Project ECLIPSE** is an eight-stage penetration-testing CTF based on the investigation of a simulated compromise of **OrionTech Solutions**, a fictional IT software and services company.
 
-### **OrionTech Solutions**
+The player begins with publicly available information and progressively moves through OrionTech's software ecosystem, web infrastructure, network traffic, Linux server, and isolated internal Finance network.
 
-OrionTech is a growing IT services company that provides:
+The challenges form a continuous attack chain:
 
-* Cloud services
+```text
+C1
+Public Reconnaissance
+     ↓
+C2
+Hidden Image / Steganography
+     ↓
+C3
+RSA Cryptographic Weakness
+     ↓
+C4
+Software Trial → Reverse Engineering
+     ↓
+C5
+Web Enumeration → SSRF → Internal API
+     ↓
+C6
+Network Forensics → Packet Reconstruction
+     ↓
+C7
+File Upload → Linux User Access
+     ↓
+C8
+Root Privilege Escalation → Network Pivot → Finance Vault
+```
+
+---
+
+# Challenge 1 — Shadow Profile
+
+## Domain
+
+**Advanced Reconnaissance / OSINT**
+
+## Difficulty
+
+Moderate
+
+## Scenario
+
+The investigation begins with the public-facing OrionTech Solutions website.
+
+OrionTech is a legitimate-looking IT company providing:
+
 * Software development
-* IT support
+* Cloud services
+* Managed IT services
 * Cybersecurity services
-* Managed infrastructure
+* Technical support
 * Software subscriptions
-* Online technical services
 
-The company operates a web platform called:
+The player is given the public OrionTech website and must investigate information available through public sources.
 
-### **OrionHub**
-
-Customers use OrionHub to:
-
-* Create accounts
-* Purchase software subscriptions
-* Make online payments
-* View invoices
-* Submit support tickets
-* Manage their services
-* Contact technical support
-
-At the same time, **OrionTech employees use the same platform** through a separate staff login.
-
-Staff members can access additional functionality such as:
-
-* Customer management
-* Support tickets
-* Payment records
-* Internal reports
-* Service management
-* Incident records
-
-However, some of these internal services are supposed to be accessible **only from the company's internal network**.
-
----
-
-# 🚨 The Incident
-
-One Monday morning, OrionTech's security team notices something unusual.
-
-Several customer accounts show suspicious activity.
-
-More importantly, the security team discovers that:
-
-> **A restricted internal payment record was accessed from an external location.**
-
-The IT team checks the logs but cannot determine exactly how the attacker entered the system.
-
-They discover several suspicious clues:
-
-```text
-Public website activity
-        ↓
-Unusual staff account activity
-        ↓
-Internal API requests
-        ↓
-Suspicious network traffic
-        ↓
-Linux server access
-        ↓
-Internal network communication
-```
-
-The company believes the attacker may have moved from the **public-facing OrionHub platform into the internal corporate network**.
-
-Your team has been hired to investigate the incident.
-
----
-
-# 🎯 Your Mission
-
-You are given access to the company's **CTF investigation environment**.
-
-Your objective is:
-
-> **Trace the attacker's complete path through OrionTech's infrastructure, starting from publicly available information and ending at the protected internal Finance Vault.**
-
-You don't know:
-
-* Who the attacker was
-* Which employee account was involved
-* How the attacker obtained internal information
-* How they accessed the Linux server
-* How they reached the internal network
-* What information was stolen
-
-You must discover the attack chain yourself.
-
----
-
-# 🔥 Complete 8-Challenge Story
-
-The important part is that **every challenge gives you information needed for the next challenge**.
-
-```text
-                    ORIONTECH SOLUTIONS
-                           │
-                           ▼
-                    🌐 Public Website
-                           │
-                           ▼
-                  C1 — Shadow Profile
-                           │
-                           ▼
-                  Developer Information
-                           │
-                           ▼
-                C2 — Fragments in Silence
-                           │
-                           ▼
-                  Hidden Crypto Files
-                           │
-                           ▼
-                   C3 — Broken Trust
-                           │
-                           ▼
-                Recovered API Secret
-                           │
-                           ▼
-                     C4 — Blackbox
-                           │
-                           ▼
-              Internal Service Information
-                           │
-                           ▼
-                    C5 — Blind Relay
-                           │
-                           ▼
-             Internal Incident Information
-                           │
-                           ▼
-                 C6 — Echoes on the Wire
-                           │
-                           ▼
-                  Linux Credentials
-                           │
-                           ▼
-                 C7 — Broken Boundary
-                           │
-                           ▼
-                Internal Network Access
-                           │
-                           ▼
-                    C8 — Zero Hour
-                           │
-                           ▼
-                   💰 Finance Vault
-                           │
-                           ▼
-                     🏆 FINAL FLAG
-```
-
----
-
-# 🟢 C1 — Shadow Profile
-
-### Advanced Reconnaissance / OSINT
-
-The investigation starts outside OrionTech.
-
-The player is given the company's public domain:
-
-```text
-oriontech.local
-```
-
-The public website contains normal company information:
-
-```text
-About Us
-Services
-Careers
-Blog
-Support
-OrionHub
-```
-
-During investigation, the player discovers information about an employee/developer who worked on OrionHub.
+During reconnaissance, the player discovers information about an old OrionTech developer.
 
 For example:
 
 ```text
-Name: Daniel Perera
-Position: Senior Software Engineer
-Project: OrionHub
-Username: dperera
+Developer:
+Daniel Perera
+
+Position:
+Senior Software Engineer
+
+Project:
+OrionHub Payment Gateway
+
+Username:
+dperera
 ```
 
-The player finds an old developer profile or abandoned project containing a reference to:
+The developer previously worked on an abandoned OrionTech software project.
+
+The player eventually discovers an abandoned project page containing an image.
+
+The image becomes the starting point for Challenge 2.
+
+## Player Objective
+
+Identify the developer connected to the legacy OrionHub project and locate the abandoned project artifact.
+
+## Expected Techniques
+
+* Website enumeration
+* Search-engine investigation
+* Public metadata analysis
+* Username correlation
+* OSINT
+* Source-code repository investigation
+
+## C1 Output
+
+The player discovers:
 
 ```text
-OrionHub Payment Gateway v1
-```
-
-The old project contains a clue pointing toward a hidden image/document.
-
-### C1 objective
-
-Identify the developer associated with the legacy OrionHub payment system and find the artifact left behind by that developer.
-
-### C1 → C2
-
-The player obtains:
-
-```text
-Developer identity
+Abandoned OrionTech project
 +
-Hidden artifact location
+Image artifact
 ```
 
-Flag:
+## Flag
 
 ```text
 ECLIPSE{shadow_profile}
 ```
 
+## Dependency
+
+C1 → C2
+
 ---
 
-# 🟡 C2 — Fragments in Silence
+# Challenge 2 — Fragments in Silence
 
-### Advanced Steganography
+## Domain
 
-The player obtains an apparently harmless image from the old OrionHub project.
+**Steganography / Digital Artifact Analysis**
+
+## Difficulty
+
+Moderate
+
+## Scenario
+
+The abandoned OrionTech project discovered during C1 contains an apparently ordinary image.
 
 Example:
 
 ```text
-orionhub_architecture.png
+legacy_orionhub.png
 ```
 
-At first it appears to be an ordinary architecture diagram.
+The image appears to be a normal technical image related to the old software project.
 
-But investigation reveals hidden information.
+However, OrionTech's developer used the image to hide information.
 
-The player can investigate:
+The player must investigate the image.
+
+The hidden information contains an encrypted message.
+
+The important part is that **the encrypted message itself is the Challenge 2 flag**.
+
+For example, the hidden content may look like:
 
 ```text
-EXIF metadata
-Strings
-Embedded files
-LSB data
-Steganography
+4f52494f4e7b........
 ```
 
-Eventually they discover:
+or another intentionally encrypted/encoded representation.
+
+The player must identify the concealment method, extract the hidden text, and recover the Challenge 2 flag.
+
+## Player Objective
+
+Analyze the image and recover the hidden encrypted message.
+
+The player must determine how the message was concealed.
+
+## Possible Techniques
+
+* Metadata analysis
+* `strings`
+* Hex analysis
+* Steganography analysis
+* LSB extraction
+* Embedded-data inspection
+* Image structure analysis
+
+## Important Design Decision
+
+Unlike the previous design, **do not make C2 unnecessarily complicated**.
+
+The intended chain should be:
 
 ```text
-orion_crypto/
-    ├── rsa_key_01.txt
-    ├── rsa_key_02.txt
-    └── legacy_notes.txt
+C1
+ ↓
+Find image
+ ↓
+Analyze image
+ ↓
+Extract hidden message
+ ↓
+Recover C2 flag
+ ↓
+Obtain clue needed for C3
 ```
 
-The notes say:
+The image can also contain a second piece of information pointing toward the RSA material used in C3.
 
-> "The payment gateway was migrated after a cryptographic key-generation issue was discovered."
+## C2 Output
 
-Now the player knows that something is wrong with the company's old payment system.
+Example:
 
-### C2 → C3
+```text
+Hidden encrypted message
++
+RSA challenge artifact location
+```
 
-The player obtains the RSA artifacts required for the next stage.
-
-Flag:
+## Flag
 
 ```text
 ECLIPSE{fragments_in_silence}
 ```
 
+## Dependency
+
+C1 → C2 → C3
+
 ---
 
-# 🔴 C3 — Broken Trust
+# Challenge 3 — Broken Trust
 
-### Applied Cryptography
+## Domain
 
-The player examines the two RSA public keys.
+**Applied Cryptography**
 
-They discover that both keys were generated incorrectly.
+## Difficulty
+
+Moderate-Hard
+
+## Scenario
+
+The information recovered from the abandoned OrionTech project leads to two RSA public keys used by the company's old payment software.
+
+Example:
+
+```text
+orion_payment_public.pem
+orion_backup_public.pem
+```
+
+The keys appear to use strong RSA encryption.
+
+However, the old developer made a serious key-generation mistake.
+
+The two RSA moduli share a prime factor.
+
+Conceptually:
+
+```text
+N1 = p × q1
+
+N2 = p × q2
+```
+
+Therefore:
+
+```text
+gcd(N1, N2) = p
+```
+
+The player must identify the cryptographic implementation weakness and reconstruct the required private-key information.
+
+The recovered private key allows the player to decrypt an encrypted message.
+
+That message provides the information required for Challenge 4.
+
+## Player Objective
+
+Identify the RSA weakness, recover the private key material, decrypt the message, and obtain the Challenge 4 software information.
+
+## Expected Techniques
+
+* RSA analysis
+* Public-key inspection
+* GCD calculation
+* Mathematical reasoning
+* OpenSSL
+* Cryptographic scripting
+* File analysis
+
+## C3 Output
+
+The decrypted message contains:
+
+```text
+OrionTech software product
++
+Trial download information
++
+Challenge 4 clue
+```
 
 For example:
 
 ```text
-RSA Key 1
-n1 = ...
+Product:
+OrionDesk Enterprise
 
-RSA Key 2
-n2 = ...
+Version:
+4.2 Trial
+
+Download:
+oriondesk_trial.exe
 ```
 
-The player notices that:
-
-```text
-gcd(n1,n2) ≠ 1
-```
-
-Therefore the keys share a prime factor.
-
-The player reconstructs the vulnerable private key and decrypts an old OrionTech configuration message.
-
-The decrypted information contains something like:
-
-```text
-ORIONHUB LEGACY CONFIGURATION
-
-Internal API:
-api.internal.oriontech
-
-Service:
-Payment Management API
-
-Legacy token:
-OT-LEGACY-********
-```
-
-This is the first major step from the **public side** of OrionTech toward its internal infrastructure.
-
-### C3 → C4
-
-The player obtains:
-
-```text
-Internal API hostname
-+
-Legacy service token
-```
-
-Flag:
+## Flag
 
 ```text
 ECLIPSE{broken_trust}
 ```
 
+## Dependency
+
+C2 → C3 → C4
+
 ---
 
-# 🟣 C4 — Blackbox
+# Challenge 4 — Blackbox
 
-### Reverse Engineering
+## Domain
 
-The player now discovers an old OrionTech client application.
+**Reverse Engineering**
+
+## Difficulty
+
+Hard
+
+## Scenario
+
+OrionTech develops software products for customers.
+
+One of its commercial products is:
+
+### OrionDesk Enterprise
+
+The player discovers the product through OrionTech's public software/product page.
+
+The company offers a **trial version** of the software.
+
+The C3 information allows the player to identify the correct product and obtain the trial version.
+
+The trial application is intentionally designed as a CTF artifact.
 
 For example:
 
 ```text
-orion-admin-client
+OrionDesk Enterprise
+Version 4.2 Trial
 ```
 
-It is a stripped Linux executable.
+The player installs or executes the software in the controlled CTF environment.
 
-The player has no source code.
+The trial version contains an intentional licensing restriction.
 
-They need to reverse engineer it using tools such as:
+For example:
 
+```text
+ORIONDESK ENTERPRISE
+
+Trial Version
+
+Remaining:
+7 days
+
+[ Activate License ]
+```
+
+The player must reverse engineer the application to understand how the trial restriction works.
+
+The application should **not** simply contain the flag as a plaintext string.
+
+Instead, the licensing logic should require analysis of the compiled program.
+
+The player discovers the internal license-validation logic and determines how the trial restriction can be bypassed.
+
+After successfully modifying or manipulating the program in the isolated CTF environment, the software operates as a simulated lifetime/full version.
+
+The full version reveals the Challenge 4 flag.
+
+## Player Objective
+
+Reverse engineer the OrionDesk trial application and bypass its simulated trial restriction to activate the lifetime version.
+
+## Expected Techniques
+
+* Static binary analysis
+* Dynamic analysis
+* Strings analysis
+* Function identification
+* Control-flow analysis
+* Debugging
 * Ghidra
-* strings
-* objdump
-* file
-* Linux debugging tools
+* `objdump`
+* `strings`
+* Linux binary analysis
 
-During analysis they discover that the application communicates with internal services.
+## Recommended Implementation
 
-Eventually they find:
+The binary should contain logic conceptually similar to:
 
 ```text
-INTERNAL_API = api.internal.oriontech
-ADMIN_SERVICE = admin.internal.oriontech
-SERVICE_TOKEN = OT-...
+check_license()
+       ↓
+check_trial_status()
+       ↓
+validate_activation()
+       ↓
+show_trial_features()
 ```
 
-They also discover an endpoint:
+The player must understand the control flow and modify the appropriate condition.
+
+The flag should only become visible after the intended activation state is reached.
+
+## C4 Output
+
+Successful activation:
 
 ```text
-/internal/incident
-```
+ORIONDESK ENTERPRISE
+LIFETIME LICENSE
 
-This tells the player where the next part of the investigation is located.
+License Status:
+ACTIVE
 
-### C4 → C5
-
-The player receives:
-
-```text
-Internal API information
-+
-Authentication token
-+
-Internal service hostname
-```
-
-Flag:
-
-```text
 ECLIPSE{blackbox}
 ```
 
+## Dependency
+
+C3 → C4
+
 ---
 
-# 🔵 C5 — Blind Relay
+# Challenge 5 — Blind Relay
 
-### Advanced Web Security
+## Domain
 
-This becomes the **main OrionHub web application challenge**.
+**Advanced Web Application Security**
 
-The player visits:
+## Difficulty
+
+Hard
+
+## Scenario
+
+After completing C4, the player has enough information to investigate OrionHub.
+
+OrionHub is OrionTech's central customer and staff platform.
+
+The application provides:
 
 ```text
-OrionHub
-```
-
-They can log in using the credentials/token obtained from C4.
-
-The platform looks like a normal IT service portal:
-
-```text
-ORIONHUB
-────────────────────
-
-Dashboard
-My Services
+Customer Login
+Staff Login
+Services
 Payments
 Invoices
 Support
 URL Preview
-Profile
-Logout
 ```
 
-The interesting feature is:
+The player begins by enumerating the web application.
 
-### URL Preview
+The URL Preview functionality is intentionally vulnerable in the isolated CTF environment.
+
+The player must discover the relevant endpoint through web enumeration.
 
 For example:
 
 ```text
-Enter URL:
-
-https://example.com
-
-[ Preview ]
+/preview
+/url-preview
+/tools/preview
+/internal/preview
 ```
 
-The player investigates how the feature works.
-
-The server fetches the requested URL.
-
-They discover that the application can communicate with an **internal service**.
-
-The player then discovers the internal API:
+The player can use authorized fuzzing tools such as:
 
 ```text
-http://api.internal.oriontech
+ffuf
 ```
 
-The internal API contains a restricted incident record.
+The objective is **not simply to discover a page**.
 
-The player eventually obtains:
+The player must understand how the URL Preview functionality causes the server to make requests to another resource.
+
+The player then uses the application behavior to reach an internal OrionTech API.
+
+The internal API contains an incident record.
+
+The player discovers a hidden endpoint and abuses an intentionally designed internal trust weakness.
+
+The chain becomes:
 
 ```text
-Incident ID:
+Web enumeration
+       ↓
+Find URL Preview
+       ↓
+Understand server-side request behavior
+       ↓
+Reach internal API
+       ↓
+Find hidden endpoint
+       ↓
+Exploit internal trust
+       ↓
+Incident record
+       ↓
+PCAP evidence
+```
+
+## Player Objective
+
+Discover the URL Preview functionality, identify the internal API, find the hidden incident endpoint, and retrieve the incident evidence.
+
+## Tools
+
+* Burp Suite
+* ffuf
+* curl
+* Browser developer tools
+* HTTP analysis tools
+
+## C5 Output
+
+The incident record contains:
+
+```text
+Incident:
 OT-INC-2026-041
-
-Status:
-CONFIDENTIAL
 
 Evidence:
 eclipse_incident.pcapng
 ```
 
-The incident record also contains the C5 flag.
-
-```text
-ECLIPSE{blind_relay}
-```
-
-Most importantly, the record tells the player:
-
-> **Network evidence from the incident has been preserved in `eclipse_incident.pcapng`.**
-
----
-
-# 🟤 C6 — Echoes on the Wire
-
-### Network Forensics
-
-Now the player investigates:
+The player can download:
 
 ```text
 eclipse_incident.pcapng
 ```
 
-The capture contains normal OrionTech network traffic.
+The incident record also contains the C5 flag.
 
-For example:
+## Flag
+
+```text
+ECLIPSE{blind_relay}
+```
+
+## Dependency
+
+C4 → C5 → C6
+
+---
+
+# Challenge 6 — Echoes on the Wire
+
+## Domain
+
+**Network Forensics / Packet Reconstruction**
+
+## Difficulty
+
+Hard
+
+## Scenario
+
+The player now has:
+
+```text
+eclipse_incident.pcapng
+```
+
+The PCAP contains traffic captured from OrionTech's internal environment.
+
+The capture contains normal traffic mixed with suspicious traffic.
+
+Example protocols:
 
 ```text
 DNS
 HTTP
-SSH
-NTP
-DHCP
+TCP
+UDP
+ARP
+ICMP
 ```
 
-But hidden among the normal traffic is suspicious communication.
+During the investigation, the player notices that an image was transferred across the internal network.
 
-The player discovers unusual DNS requests such as:
+The image is intentionally split across multiple network packets.
+
+For example:
 
 ```text
-01.xxxxxx.orion-monitor.local
-02.xxxxxx.orion-monitor.local
-03.xxxxxx.orion-monitor.local
+Packet 101 → Image fragment 01
+Packet 102 → Image fragment 02
+Packet 103 → Image fragment 03
 ...
+Packet 110 → Image fragment 10
 ```
 
-The data is split into multiple encoded fragments.
+The fragments do not immediately form a usable image.
 
-The player needs to:
+The player must identify the relevant communication and reconstruct the original image.
 
-1. Filter DNS traffic
-2. Identify the suspicious domain
-3. Identify the compromised host
-4. Extract the fragments
-5. Sort them
-6. Reconstruct the message
-7. Decode the data
+## Player Objective
 
-Eventually they recover:
+Identify the ten packets belonging to the image transfer and reconstruct the original image from the network traffic.
+
+The recovered image contains a GPS coordinate.
+
+For example:
 
 ```text
-SSH ACCESS
-
-Username:
-backupsvc
-
-Password:
-************
-
-Server:
-10.77.10.70
+06°55'xx.x"N
+79°5x'xx.x"E
 ```
 
-They also obtain:
+The coordinates form the Challenge 6 flag/clue.
+
+## Important Technical Design
+
+The image should be transferred using a protocol that produces genuine packet-level evidence.
+
+A good implementation is:
+
+```text
+Sender
+   ↓
+TCP/HTTP transfer
+   ↓
+PCAP capture
+   ↓
+10 relevant packets
+   ↓
+Reassembly
+   ↓
+Original image
+```
+
+This is better than simply putting ten unrelated packets into the PCAP.
+
+The player should need to use:
+
+* Wireshark
+* Follow TCP Stream
+* Export/reconstruct transferred data
+* tshark
+* Hex inspection
+
+## C6 Output
+
+Recovered image:
+
+```text
+ORIONTECH INTERNAL LOCATION
+
+GPS:
+<synthetic coordinates>
+```
+
+The coordinates reveal the C6 flag.
+
+## Flag
 
 ```text
 ECLIPSE{echoes_on_the_wire}
 ```
 
-Now they have credentials to access an OrionTech Linux server.
+## Dependency
+
+C5 → C6 → C7
 
 ---
 
-# ⚫ C7 — Broken Boundary
+# Challenge 7 — Broken Boundary
 
-### Linux Privilege Escalation
+## Domain
 
-The player connects to:
+**Web File Upload + Linux Initial Access**
+
+## Difficulty
+
+Hard
+
+## Scenario
+
+During the web enumeration performed in C5, the player discovers another obscure OrionTech page.
+
+The page belongs to an old developer support/ticket system.
+
+Example:
 
 ```text
-10.77.10.70
+/legacy/support/ticket-request
 ```
 
-using:
+The page is intentionally difficult to discover.
+
+It contains an old customer ticket submission form.
+
+The form allows users to upload attachments.
+
+The intended restriction says:
 
 ```text
-backupsvc
+Allowed:
+PDF documents only
 ```
 
-They are not root.
+However, the upload validation is intentionally vulnerable.
 
-They investigate the system.
+The player discovers that a server-executable file can be uploaded despite the supposed PDF restriction.
+
+The player uses the vulnerability in the isolated CTF environment to obtain a shell as a **low-privileged OrionTech user**.
 
 For example:
 
 ```text
-whoami
-id
-sudo -l
-find / -writable
+www-data
 ```
 
-They discover an intentionally vulnerable OrionTech maintenance process.
-
-For example:
+or:
 
 ```text
-/opt/orion/maintenance/backup.sh
+ticketuser
 ```
 
-The script is writable by the low-privileged account but executed by root.
+The player is not root.
 
-The player uses the weakness to obtain:
+After obtaining access, they investigate the system and find:
 
 ```text
-root
+/home/ticketuser/user.txt
 ```
 
-Once they become root, they discover a network configuration file:
+The file contains the C7 flag.
+
+## Player Objective
+
+Discover the hidden legacy ticket system, identify the upload weakness, obtain low-privileged system access, and locate the user-level flag.
+
+## Expected Skills
+
+* Web enumeration
+* File-upload security analysis
+* Burp Suite
+* ffuf
+* HTTP request manipulation
+* Linux shell
+* System enumeration
+
+## Important Isolation Requirement
+
+The upload vulnerability must exist **only inside the CTF environment**.
+
+The server should:
+
+* Contain synthetic data
+* Have no access to production systems
+* Have no sensitive host mounts
+* Have no unnecessary outbound Internet access
+* Run inside the isolated challenge network
+
+These isolation requirements are consistent with the original project design.
+
+## C7 Output
+
+The player obtains:
 
 ```text
-/etc/orion/internal-network.conf
+Low-privileged Linux shell
++
+user.txt
++
+Internal server information
 ```
 
-It contains:
-
-```text
-Corporate Internal Network:
-
-10.77.40.0/24
-
-Finance Vault:
-10.77.40.20
-```
-
-They now realize:
-
-> The server they compromised has access to a second, isolated network.
-
-C7 flag:
+Example:
 
 ```text
 ECLIPSE{broken_boundary}
 ```
 
+The system also contains information that becomes useful for C8.
+
+## Dependency
+
+C6 → C7 → C8
+
 ---
 
-# 🔥 C8 — Zero Hour
+# Challenge 8 — Zero Hour
 
-### Network Pivoting / Final Compromise
+## Domain
 
-The player is currently on:
+**Linux Privilege Escalation + Network Pivoting**
+
+## Difficulty
+
+Hard / Capstone
+
+## Scenario
+
+The player now has low-privileged access to the OrionTech Linux server.
+
+The player investigates the server.
+
+They discover an OrionTech backup mechanism:
 
 ```text
-10.77.10.70
+/opt/orion/backup/backup.sh
 ```
 
-But the Finance Vault exists on:
+The backup process is executed automatically by root every five minutes.
+
+Conceptually:
 
 ```text
-10.77.40.0/24
+root
+ │
+ └── cron
+      │
+      └── backup.sh
 ```
 
-The player cannot access that network directly.
+However, the script has an intentional permission weakness.
 
-The compromised OrionTech server has two network interfaces:
+The low-privileged user can modify the script.
+
+The player identifies this privilege boundary and uses it to execute code with root privileges.
+
+The player becomes:
+
+```text
+root
+```
+
+## Root Access
+
+After obtaining root access, the player investigates the network configuration.
+
+They discover that the Linux server has two network interfaces:
 
 ```text
 eth0
@@ -663,164 +858,283 @@ eth1
 10.77.40.10
 ```
 
-Therefore the player must use the compromised server as a **pivot**.
+The second interface connects to the isolated Finance network.
 
-After establishing access to the internal network, they discover:
+```text
+10.77.40.0/24
+```
+
+The player must use the compromised Linux system as a pivot.
+
+---
+
+# Internal Finance Network
+
+The player discovers:
 
 ```text
 10.77.40.20
 ```
 
-### Finance Vault
+This host contains:
 
-The final internal service contains sensitive synthetic company information:
+### OrionTech Finance Vault
 
 ```text
-ORIONTECH FINANCE VAULT
-──────────────────────────
-
 Customer Payments
+Invoices
 Subscription Records
-Internal Invoices
 Incident Reports
-Backup Records
+Internal Finance Documents
 ```
 
-The player discovers the final investigation report.
+All data is synthetic and created specifically for the CTF.
 
-It reveals:
+The player must enumerate the authorized internal network and identify the Finance Vault.
 
-> The attacker originally obtained information from a legacy OrionTech development project, used weaknesses in the company's old payment infrastructure, moved through the public OrionHub application, obtained access to an internal server, escalated privileges, and finally reached the isolated Finance network.
+The final access sequence also requires information accumulated during previous challenges.
 
-Then:
+---
+
+# Cross-Challenge Dependency
+
+The final challenge should demonstrate that the previous challenges were not independent.
+
+The attack chain is:
+
+```text
+C1
+Developer identity
+      ↓
+C2
+Hidden project artifact
+      ↓
+C3
+Cryptographic secret
+      ↓
+C4
+Software/internal information
+      ↓
+C5
+Incident record
+      ↓
+C6
+Network evidence
+      ↓
+C7
+Linux user access
+      ↓
+C8
+Root + Internal Network
+      ↓
+Finance Vault
+```
+
+The player therefore reconstructs the complete compromise rather than solving eight unrelated puzzles.
+
+## C8 Objective
+
+1. Investigate the Linux system.
+2. Identify the root-executed backup process.
+3. Exploit the intended privilege boundary.
+4. Obtain root access.
+5. Inspect network interfaces.
+6. Identify the Finance network.
+7. Establish the intended pivot.
+8. Enumerate the authorized internal subnet.
+9. Identify the Finance Vault.
+10. Retrieve the final flag.
+
+## Final Flag
 
 ```text
 ECLIPSE{oriontech_complete_compromise}
 ```
 
-🏆 **FINAL FLAG**
+---
+
+# Final Challenge Summary
+
+| ID | Challenge            | Domain                          | Main Skill                          | Difficulty      |
+| -- | -------------------- | ------------------------------- | ----------------------------------- | --------------- |
+| C1 | Shadow Profile       | OSINT / Recon                   | Public information gathering        | Moderate        |
+| C2 | Fragments in Silence | Steganography                   | Hidden image analysis               | Moderate        |
+| C3 | Broken Trust         | Cryptography                    | RSA shared-prime attack             | Moderate-Hard   |
+| C4 | Blackbox             | Reverse Engineering             | Trial software analysis             | Hard            |
+| C5 | Blind Relay          | Web Security                    | Enumeration + SSRF + internal trust | Hard            |
+| C6 | Echoes on the Wire   | Network Forensics               | Packet reconstruction               | Hard            |
+| C7 | Broken Boundary      | Web + Linux                     | File upload → initial access        | Hard            |
+| C8 | Zero Hour            | Privilege Escalation + Pivoting | Root → internal network → vault     | Hard / Capstone |
 
 ---
 
-# 🌐 The OrionTech Architecture
-
-This story also gives you a logical architecture for the actual test environment:
+# Complete Attack Chain
 
 ```text
-                         INTERNET
-                            │
-                            ▼
-                 ┌────────────────────┐
-                 │  OrionTech Public  │
-                 │      Website       │
-                 └─────────┬──────────┘
-                           │
-                           ▼
-                 ┌────────────────────┐
-                 │     ORIONHUB       │
-                 │  Customer Portal   │
-                 │  Staff Login       │
-                 │  Payments          │
-                 │  Support           │
-                 └─────────┬──────────┘
-                           │
-                           │
-                 ┌─────────▼──────────┐
-                 │    Internal API    │
-                 │ api.internal...    │
-                 └─────────┬──────────┘
-                           │
-                 ┌─────────▼──────────┐
-                 │  Admin/Incident    │
-                 │      Service       │
-                 └────────────────────┘
-
-
-                    INTERNAL NETWORK
-                           │
-                           ▼
-                 ┌────────────────────┐
-                 │   Linux Server     │
-                 │   10.77.10.70      │
-                 │   10.77.40.10      │
-                 └─────────┬──────────┘
-                           │
-                     NETWORK PIVOT
-                           │
-                           ▼
-
-                  FINANCE NETWORK
-                    10.77.40.0/24
-                           │
-                           ▼
-                 ┌────────────────────┐
-                 │    FINANCE VAULT   │
-                 │    10.77.40.20     │
-                 └────────────────────┘
+                 ORIONTECH SOLUTIONS
+                         │
+                         ▼
+                ┌─────────────────┐
+                │ C1 Shadow       │
+                │ Profile         │
+                │ OSINT           │
+                └────────┬────────┘
+                         │
+                  Developer/
+                  project clue
+                         │
+                         ▼
+                ┌─────────────────┐
+                │ C2 Fragments    │
+                │ in Silence      │
+                │ Steganography   │
+                └────────┬────────┘
+                         │
+                    RSA artifacts
+                         │
+                         ▼
+                ┌─────────────────┐
+                │ C3 Broken Trust │
+                │ RSA weakness    │
+                └────────┬────────┘
+                         │
+                  Software clue
+                         │
+                         ▼
+                ┌─────────────────┐
+                │ C4 Blackbox     │
+                │ Reverse         │
+                │ Engineering     │
+                └────────┬────────┘
+                         │
+                 OrionHub clue
+                         │
+                         ▼
+                ┌─────────────────┐
+                │ C5 Blind Relay  │
+                │ Web Security    │
+                └────────┬────────┘
+                         │
+                 Incident + PCAP
+                         │
+                         ▼
+                ┌─────────────────┐
+                │ C6 Echoes on    │
+                │ the Wire        │
+                │ Network         │
+                │ Forensics       │
+                └────────┬────────┘
+                         │
+                  Linux access
+                  information
+                         │
+                         ▼
+                ┌─────────────────┐
+                │ C7 Broken       │
+                │ Boundary        │
+                │ File Upload     │
+                │ Linux Access    │
+                └────────┬────────┘
+                         │
+                    User shell
+                         │
+                         ▼
+                ┌─────────────────┐
+                │ C8 Zero Hour    │
+                │ Root + Pivot    │
+                └────────┬────────┘
+                         │
+                         ▼
+                ┌─────────────────┐
+                │ FINANCE VAULT   │
+                │ 10.77.40.20     │
+                └────────┬────────┘
+                         │
+                         ▼
+              ECLIPSE{FINAL_FLAG}
 ```
 
-This fits very nicely with the original proposal's participant, challenge-service, and internal-vault network separation. 
+# Assignment Alignment
 
----
+The revised design still covers the major technical domains required by the original proposal:
 
-# 👨‍💻 Staff Login Makes the Story Better
+| Assignment Area                       | Revised Challenge |
+| ------------------------------------- | ----------------- |
+| Reconnaissance                        | C1                |
+| Steganography                         | C2                |
+| Cryptography                          | C3                |
+| Reverse Engineering                   | C4                |
+| Web Security                          | C5                |
+| Network Forensics                     | C6                |
+| Linux Security / Privilege Escalation | C7 + C8           |
+| Network Pivoting                      | C8                |
+| Cross-Challenge Dependency            | C1 → C8           |
+| Scripting / Automation                | C3, C5, C6, C8    |
+| Network Segmentation                  | C8                |
+| CTFd                                  | All challenges    |
+| Docker / Virtualization               | C5, C7, C8        |
 
-I would definitely include **staff authentication** in OrionHub.
+The original assignment specifically maps the eight stages to learning outcomes and emphasizes cross-challenge dependency, with C8 using information accumulated from earlier challenges.
 
-The public side could look like:
+# Important Implementation Requirements
+
+For the implementation, all vulnerable components must remain inside the authorized CTF environment.
+
+Use:
 
 ```text
-ORIONHUB
-
-[ Customer Login ]
-[ Staff Login ]
+Synthetic accounts
+Synthetic company data
+Synthetic payment records
+Synthetic employee identities
+Synthetic GPS coordinates
+Synthetic network traffic
+Synthetic credentials
 ```
 
-### Customer
-
-Can access:
+Do not use real:
 
 ```text
-Dashboard
-Services
-Payments
-Invoices
-Support Tickets
+Credit cards
+Employee information
+Customer information
+Production credentials
+Production software
+Real company infrastructure
 ```
 
-### Staff
+The original proposal explicitly requires synthetic data, private IP addresses, isolated infrastructure, and no production systems.
 
-Can access:
+# Recommended Scoring
 
-```text
-Staff Dashboard
-Customer Management
-Payment Records
-Support Tickets
-Incident Management
-Internal Reports
-```
+The original scoring model totaled **2,875 points**, with difficulty increasing toward C8.
 
-But here's the important design:
+A revised distribution can remain:
 
-**Don't make the staff login itself the vulnerability.**
+| Challenge |     Score |
+| --------- | --------: |
+| C1        |       150 |
+| C2        |       175 |
+| C3        |       250 |
+| C4        |       300 |
+| C5        |       400 |
+| C6        |       450 |
+| C7        |       500 |
+| C8        |       650 |
+| **Total** | **2,875** |
 
-Instead, the player should gradually obtain legitimate-looking staff/service credentials from previous challenges and then discover that some **staff-only functionality incorrectly trusts requests coming through the public application**.
+This maintains the original progression toward the capstone.
 
-That makes C5 much more interesting because the player is not simply:
+# Final Assessment
 
-> "Find password → login → flag."
+**Yes — I would approve this revised challenge structure for the project.**
 
-Instead:
+The strongest changes are:
 
-> **Recon → hidden developer → cryptographic weakness → service credentials → reverse-engineering → staff application → server-side request behavior → internal API → incident evidence → PCAP → Linux credentials → privilege escalation → pivot → Finance Vault.**
+* **C4:** The commercial software trial gives the reverse-engineering challenge a believable reason to exist.
+* **C5:** The web challenge becomes a proper multi-step web-security investigation rather than a single vulnerability.
+* **C6:** Packet reconstruction makes the network-forensics stage much more hands-on.
+* **C7:** The hidden legacy ticket system creates a believable bridge from web enumeration to Linux access.
+* **C8:** Root escalation followed by network pivoting provides a strong capstone.
 
----
-
-# 🎬 The Story in One Sentence
-
-If you need to explain the entire CTF to your lecturer:
-
-> **Project ECLIPSE is an eight-stage penetration-testing CTF in which participants investigate a simulated compromise of OrionTech Solutions, beginning with public information leakage and progressing through cryptography, reverse engineering, web application security, network forensics, Linux privilege escalation, and network pivoting before reaching an isolated internal Finance Vault.**
-
-That gives you a **single continuous attack narrative**, while every one of the original eight technical areas still has a clear purpose. 
+Most importantly, the eight stages still satisfy the original design principle that the player should **progressively reproduce an attack chain rather than solve isolated puzzles**.

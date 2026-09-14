@@ -739,7 +739,7 @@ C4 → C5 → C6
 
 ## Domain
 
-**Network Forensics / Packet Reconstruction**
+**Network Forensics / Steganography**
 
 ## Difficulty
 
@@ -747,20 +747,68 @@ Hard
 
 ## Scenario
 
-The player obtains:
+After completing C5, the player obtains a network capture from the
+OrionTech internal environment:
 
 ``` text
 network-diagnostics-041.pcapng
 ```
 
-from C5.
+The PCAP contains normal background network traffic mixed with a
+suspicious communication.
 
-The PCAP represents traffic captured from an isolated OrionTech internal
-environment.
+During the investigation, the player discovers that an image was
+transmitted across the network.
 
-The capture contains a mixture of legitimate and suspicious traffic.
+The image has been divided across **10 relevant packet frames**.
 
-For example:
+The player is not given the frame numbers. They must investigate the
+PCAP and identify the packets belonging to the image transfer.
+
+The intended challenge chain is:
+
+``` text
+C5
+ ↓
+Obtain PCAP
+ ↓
+Analyze PCAP with Wireshark
+ ↓
+Identify suspicious communication
+ ↓
+Find the 10 relevant packet frames
+ ↓
+Extract / reconstruct image
+ ↓
+Analyze recovered image
+ ↓
+Steganography
+ ↓
+Recover C6 flag
+```
+
+------------------------------------------------------------------------
+
+## Player Objective
+
+The player must:
+
+1.  Open the PCAP in Wireshark.
+2.  Investigate the captured network traffic.
+3.  Identify the communication containing the hidden image.
+4.  Identify the **10 packet frames** carrying the image fragments.
+5.  Extract and reconstruct the original image.
+6.  Analyze the recovered image using steganography techniques.
+7.  Extract the hidden C6 flag.
+
+------------------------------------------------------------------------
+
+## Network Capture Design
+
+The PCAP should contain realistic background traffic so that the
+relevant packets are not immediately obvious.
+
+Example traffic:
 
 ``` text
 DNS
@@ -771,192 +819,177 @@ UDP
 ICMP
 ```
 
-The player is **not told which packets contain the important evidence**.
+Among the normal traffic, one suspicious communication contains the
+image.
 
-Instead, they must investigate the capture and identify the suspicious
-communication.
+The image should be split across exactly **10 relevant packet frames**.
 
-------------------------------------------------------------------------
-
-## Investigation
-
-The player begins by analysing:
+Example concept:
 
 ``` text
-network-diagnostics-041.pcapng
+Frame A → Image fragment 01
+Frame B → Image fragment 02
+Frame C → Image fragment 03
+...
+Frame J → Image fragment 10
 ```
 
-using tools such as:
+The actual frame numbers should not be disclosed to the player.
 
--   Wireshark
--   tshark
--   Follow TCP Stream
--   Display filters
--   Hex inspection
-
-The PCAP contains several conversations.
-
-One internal TCP communication contains an image transferred as
-application data.
-
-The relevant traffic is intentionally mixed with normal background
-traffic so that the player must identify the correct stream rather than
-simply selecting ten pre-labelled packets.
-
-Conceptually:
-
-``` text
-PCAP
- ↓
-Identify suspicious connection
- ↓
-Inspect TCP stream
- ↓
-Identify transferred binary data
- ↓
-Recover ten relevant data segments
- ↓
-Reconstruct image
-```
+The player must discover them through network analysis.
 
 ------------------------------------------------------------------------
 
 ## Packet Reconstruction
 
-The image is transmitted across **ten relevant TCP application-data
-segments**.
+The image should be transferred using a genuine network communication
+rather than simply placing ten unrelated packets into the PCAP.
 
-The player is not given their packet numbers.
-
-They must identify the correct stream and reconstruct the transferred
-data.
-
-The ten segments collectively contain the complete image.
-
-The challenge therefore tests genuine packet-level investigation rather
-than simply providing ten unrelated packets containing image fragments.
-
-The intended evidence path is:
+Conceptually:
 
 ``` text
-Mixed PCAP
-      ↓
-Find suspicious internal communication
-      ↓
-Follow TCP stream
-      ↓
-Identify image payload
-      ↓
-Reassemble / export data
-      ↓
-Recover original image
+Image
+  ↓
+Split into 10 fragments
+  ↓
+Transmit through TCP communication
+  ↓
+Capture traffic
+  ↓
+PCAP
+```
+
+The player investigates the communication and reconstructs the image
+from the relevant packet data.
+
+The final reconstructed file should be a valid image, for example:
+
+``` text
+recovered-image.png
 ```
 
 ------------------------------------------------------------------------
 
-## Recovered Image
+## Steganography Stage
 
-The reconstructed image is an OrionTech internal diagnostic/location
-artifact.
+The recovered image appears to be an ordinary OrionTech-related image.
 
-Example:
+However, the image contains hidden data.
 
-``` text
-ORIONTECH NETWORK OPERATIONS
+The player must perform steganography analysis to discover the hidden
+flag.
 
-Incident:
-OT-INC-2026-041
+Possible techniques/tools include:
 
-Diagnostic Location:
+-   `steghide`
+-   `zsteg`
+-   `strings`
+-   `binwalk`
+-   `exiftool`
+-   Hex analysis
 
-Latitude:
-06°55'xx.x"N
+The exact hiding technique should be discoverable by the player rather
+than explicitly stated in the challenge description.
 
-Longitude:
-79°5x'xx.x"E
-```
-
-The coordinates are **synthetic CTF data**.
-
-They provide the information required to obtain the C6 flag.
-
-------------------------------------------------------------------------
-
-## Player Objective
-
-1.  Open the PCAP obtained from C5.
-2.  Identify suspicious network traffic.
-3.  Determine which TCP communication contains the relevant data.
-4.  Follow and analyse the TCP stream.
-5.  Identify the ten relevant application-data segments.
-6.  Reconstruct the transferred image.
-7.  Extract the synthetic GPS coordinates.
-8.  Recover the C6 flag.
-
-------------------------------------------------------------------------
-
-## Expected Techniques
-
--   Wireshark
--   tshark
--   TCP stream analysis
--   Packet filtering
--   Protocol analysis
--   Hexadecimal inspection
--   Binary data reconstruction
--   File extraction
-
-------------------------------------------------------------------------
-
-## Important Technical Design
-
-The ten packets should be part of a **realistic network conversation**.
-
-Do not label them:
+The hidden data contains:
 
 ``` text
-Packet 1
-Packet 2
-Packet 3
-...
-Packet 10
+ECLIPSE{echoes_on_the_wire}
 ```
-
-for the player.
-
-Instead, generate a realistic capture containing background traffic and
-one suspicious transfer.
-
-The player should discover the relevant packets through forensic
-analysis.
-
-This makes C6 a genuine **Network Forensics / Packet Reconstruction**
-challenge.
 
 ------------------------------------------------------------------------
 
 ## C6 Output
 
-Recovered image:
+The player successfully obtains:
 
 ``` text
-ORIONTECH NETWORK OPERATIONS
-
-Diagnostic Location:
-<synthetic GPS coordinates>
+ECLIPSE{echoes_on_the_wire}
 ```
 
-The recovered information reveals the C6 flag.
+The reconstructed image is the intermediate artifact that leads to the
+flag.
+
+------------------------------------------------------------------------
+
+## Expected Skills
+
+-   Network traffic analysis
+-   Wireshark
+-   TCP stream analysis
+-   Packet filtering
+-   Packet identification
+-   Data extraction
+-   File reconstruction
+-   Steganography
+-   Image analysis
+-   Basic hexadecimal analysis
+
+------------------------------------------------------------------------
+
+## Recommended Player Workflow
+
+``` text
+Open PCAP
+    ↓
+Inspect protocols / conversations
+    ↓
+Identify suspicious traffic
+    ↓
+Follow relevant TCP communication
+    ↓
+Identify 10 image-carrying frames
+    ↓
+Extract packet payloads
+    ↓
+Reconstruct image
+    ↓
+Analyze image
+    ↓
+Detect hidden data
+    ↓
+Extract flag
+```
+
+------------------------------------------------------------------------
+
+## Important Design Decision
+
+The challenge should remain intentionally straightforward.
+
+The player should **not** need to:
+
+-   Geolocate coordinates
+-   Search external real-world locations
+-   Decode multiple unrelated layers
+-   Solve an additional cryptographic puzzle
+
+The core challenge is:
+
+> **Network Forensics → Image Reconstruction → Steganography → Flag**
+
+This keeps C6 focused while still requiring the player to perform two
+distinct technical investigations.
+
+------------------------------------------------------------------------
+
+## Dependency
+
+``` text
+C5 → C6 → C7
+```
+
+C5 provides the PCAP required to begin C6.
+
+C6 provides the successful completion required to continue to C7.
+
+------------------------------------------------------------------------
 
 ## Flag
 
 ``` text
 ECLIPSE{echoes_on_the_wire}
 ```
-
-## Dependency
-
-C5 → C6 → C7
 
 ------------------------------------------------------------------------
 

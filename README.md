@@ -57,24 +57,24 @@ Moderate
 The investigation begins with the public-facing OrionTech Solutions
 website.
 
-OrionTech is a legitimate-looking IT company providing:
+OrionTech is a fictional IT company providing:
 
--   Software development
--   Cloud services
--   Managed IT services
--   Cybersecurity services
--   Technical support
--   Software subscriptions
+- Software development
+- Cloud services
+- Managed IT services
+- Cybersecurity services
+- Technical support
+- Software subscriptions
 
 The player is given the public OrionTech website and must investigate
 information available through public sources.
 
-During reconnaissance, the player discovers information about an old
-OrionTech developer.
+During reconnaissance, the player identifies a developer associated with
+an older OrionTech project.
 
 For example:
 
-``` text
+```text
 Developer:
 Daniel Perera
 
@@ -89,40 +89,86 @@ dperera
 ```
 
 The developer previously worked on an abandoned OrionTech software
-project.
+project. The player must locate the developer's repository and investigate
+its history rather than relying only on the current files.
 
-The player eventually discovers an abandoned project page containing an
-image.
+The important part of C1 is the **Git commit-history investigation**.
+Information that is no longer visible in the latest version of the
+repository can still be recovered from an older commit.
 
-The image becomes the starting point for Challenge 2.
+The player eventually finds an abandoned/legacy project artifact,
+including an image that becomes the starting point for Challenge 2.
 
 ## Player Objective
 
-Identify the developer connected to the legacy OrionHub project and
-locate the abandoned project artifact.
+Identify the developer connected to the legacy OrionHub project, locate
+the associated Git repository, investigate its commit history, and
+recover the abandoned project artifact required for C2.
+
+## Player Task
+
+The intended investigation path is:
+
+```text
+OrionTech public website
+        ↓
+Identify relevant developer
+        ↓
+Find developer's Git repository
+        ↓
+Inspect repository structure
+        ↓
+Investigate Git commit history
+        ↓
+Find older / abandoned commit
+        ↓
+Recover removed or historical project artifact
+        ↓
+Obtain image for C2
+```
+
+The player should investigate both the current repository state and its
+historical commits. The required information is intentionally not
+available only from the latest files.
 
 ## Expected Techniques
 
--   Website enumeration
--   Search-engine investigation
--   Public metadata analysis
--   Username correlation
--   OSINT
--   Source-code repository investigation
+- Website enumeration
+- Search-engine investigation
+- Public metadata analysis
+- Username correlation
+- OSINT
+- Git repository investigation
+- Git commit-history analysis
+- Inspection of older commits
+- Recovery of deleted or changed files
+
+Example Git commands that may be useful:
+
+```bash
+git log
+git log --all
+git show <commit>
+git diff <old-commit> <new-commit>
+```
 
 ## C1 Output
 
 The player discovers:
 
-``` text
-Abandoned OrionTech project
+```text
+Relevant developer
 +
-Image artifact
+Legacy / abandoned Git project
++
+Historical project artifact / image
 ```
+
+The recovered artifact provides the starting point for C2.
 
 ## Flag
 
-``` text
+```text
 ECLIPSE{shadow_profile}
 ```
 
@@ -136,7 +182,7 @@ C1 → C2
 
 ## Domain
 
-**Steganography / Digital Artifact Analysis**
+**Advanced Steganography / Digital Artifact Analysis**
 
 ## Difficulty
 
@@ -144,91 +190,80 @@ Moderate
 
 ## Scenario
 
-The abandoned OrionTech project discovered during C1 contains an
+The abandoned OrionTech project recovered during C1 contains an
 apparently ordinary image.
 
 Example:
 
-``` text
+```text
 legacy_orionhub.png
 ```
 
-The image appears to be a normal technical image related to the old
-software project.
+The image is an artifact from the abandoned project and appears to be a
+normal technical image at first inspection.
 
-However, OrionTech's developer used the image to hide information.
+However, information has been concealed inside the artifact.
 
-The player must investigate the image.
+The player must investigate the image and determine how hidden
+information was embedded.
 
-The hidden information contains an encrypted message.
-
-The important part is that **the encrypted message itself is the
-Challenge 2 flag**.
-
-For example, the hidden content may look like:
-
-``` text
-4f52494f4e7b........
-```
-
-or another intentionally encrypted/encoded representation.
-
-The player must identify the concealment method, extract the hidden
-text, and recover the Challenge 2 flag.
+The recovered information provides the cryptographic material and
+context required for C3.
 
 ## Player Objective
 
-Analyze the image and recover the hidden encrypted message.
+Analyze the abandoned-project image, identify the steganographic or
+embedded-data technique, and recover the hidden RSA-related artifacts
+required for Challenge 3.
 
-The player must determine how the message was concealed.
+## Player Task
+
+The intended investigation path is:
+
+```text
+Image obtained from C1
+        ↓
+Inspect file and metadata
+        ↓
+Identify hidden / embedded information
+        ↓
+Extract concealed artifact
+        ↓
+Recover RSA public-key files and encrypted message
+        ↓
+Use the recovered material in C3
+```
+
+The player is not expected to solve the RSA weakness during C2. C2
+focuses on discovering and extracting the hidden artifacts.
 
 ## Possible Techniques
 
--   Metadata analysis
--   `strings`
--   Hex analysis
--   Steganography analysis
--   LSB extraction
--   Embedded-data inspection
--   Image structure analysis
-
-## Important Design Decision
-
-Unlike the previous design, **do not make C2 unnecessarily
-complicated**.
-
-The intended chain should be:
-
-``` text
-C1
- ↓
-Find image
- ↓
-Analyze image
- ↓
-Extract hidden message
- ↓
-Recover C2 flag
- ↓
-Obtain clue needed for C3
-```
-
-The image can also contain a second piece of information pointing toward
-the RSA material used in C3.
+- Metadata analysis
+- `strings`
+- Hex analysis
+- Steganography analysis
+- LSB extraction
+- Embedded-data inspection
+- Image structure analysis
+- File/archive analysis where applicable
 
 ## C2 Output
 
-Example:
+The player recovers the cryptographic artifacts used by C3, including:
 
-``` text
-Hidden encrypted message
-+
-RSA challenge artifact location
+```text
+payment-public.pem
+backup-public.pem
+message.enc
 ```
+
+The recovered information also provides the context needed to understand
+that the files belong to the old OrionTech payment software.
 
 ## Flag
 
-``` text
+```text
 ECLIPSE{fragments_in_silence}
 ```
 
@@ -250,87 +285,124 @@ Moderate-Hard
 
 ## Scenario
 
-The information recovered from the abandoned OrionTech project leads to
-two RSA public keys used by the company's old payment software.
+The information recovered from C2 leads to two RSA public keys used by
+the old OrionTech payment software.
 
-Example:
+The challenge provides:
 
-``` text
-orion_payment_public.pem
-orion_backup_public.pem
+```text
+payment-public.pem
+backup-public.pem
+message.enc
 ```
 
-The keys appear to use strong RSA encryption.
-
-However, the old developer made a serious key-generation mistake.
-
-The two RSA moduli share a prime factor.
+The keys appear to use strong RSA encryption. However, the two RSA
+moduli were intentionally generated using the **same prime factor**.
 
 Conceptually:
 
-``` text
-N1 = p × q1
+```text
+N1 = P × Q1
 
-N2 = p × q2
+N2 = P × Q2
 ```
 
 Therefore:
 
-``` text
-gcd(N1, N2) = p
+```text
+gcd(N1, N2) = P
 ```
 
-The player must identify the cryptographic implementation weakness and
-reconstruct the required private-key information.
+This implementation mistake allows the player to recover the shared
+prime and reconstruct the private-key information for the relevant RSA
+key.
 
-The recovered private key allows the player to decrypt an encrypted
-message.
-
-That message provides the information required for Challenge 4.
+The player then uses the recovered private exponent to decrypt
+`message.enc`.
 
 ## Player Objective
 
-Identify the RSA weakness, recover the private key material, decrypt the
-message, and obtain the Challenge 4 software information.
+Identify the RSA shared-prime weakness, recover the private-key
+information, decrypt `message.enc`, and obtain the C3 flag together with
+the information required to begin C4.
+
+## Player Task
+
+The intended attack path is:
+
+```text
+Extract N1 and N2 from the public keys
+        ↓
+Calculate gcd(N1, N2)
+        ↓
+Recover shared prime P
+        ↓
+Calculate Q1
+        ↓
+Calculate φ(N1)
+        ↓
+Derive private exponent d
+        ↓
+Decrypt message.enc
+        ↓
+Recover C3 flag and C4 reference
+```
+
+The key relationship is:
+
+```text
+N1 = P × Q1
+N2 = P × Q2
+
+gcd(N1, N2) = P
+```
+
+The player can use OpenSSL and/or a cryptographic script to inspect the
+key material and perform the required calculations.
 
 ## Expected Techniques
 
--   RSA analysis
--   Public-key inspection
--   GCD calculation
--   Mathematical reasoning
--   OpenSSL
--   Cryptographic scripting
--   File analysis
+- RSA public-key analysis
+- PEM/key inspection
+- GCD calculation
+- RSA mathematics
+- Modular inverse
+- Private exponent derivation
+- OpenSSL
+- Cryptographic scripting
+- File analysis
 
 ## C3 Output
 
 The decrypted message contains:
 
-``` text
-OrionTech software product
-+
-Trial download information
-+
-Challenge 4 clue
+```text
+ORIONTECH INTERNAL ENGINEERING MESSAGE
+Product: OrionDesk Enterprise
+Version: 4.2 Trial
+C4 Reference: ORION-DESK-42
+ECLIPSE{broken_trust}
 ```
 
-For example:
+The important C4 information is:
 
-``` text
+```text
 Product:
 OrionDesk Enterprise
 
 Version:
 4.2 Trial
 
-Download:
-oriondesk_trial.exe
+C4 Reference:
+ORION-DESK-42
 ```
+
+This information directs the player to the OrionDesk trial software used
+in C4.
 
 ## Flag
 
-``` text
+```text
 ECLIPSE{broken_trust}
 ```
 
@@ -352,37 +424,25 @@ Hard
 
 ## Scenario
 
-OrionTech develops software products for customers.
+The C3 decrypted message identifies an OrionTech commercial software
+product:
 
-One of its commercial products is:
-
-### OrionDesk Enterprise
-
-The player discovers the product through OrionTech's public
-software/product page.
-
-The company offers a **trial version** of the software.
-
-The C3 information allows the player to identify the correct product and
-obtain the trial version.
-
-The trial application is intentionally designed as a CTF artifact.
-
-For example:
-
-``` text
+```text
 OrionDesk Enterprise
 Version 4.2 Trial
+C4 Reference: ORION-DESK-42
 ```
 
-The player installs or executes the software in the controlled CTF
-environment.
+The player must obtain the **OrionDesk Enterprise 4.2 Trial** software
+and analyze it in the controlled CTF environment.
 
-The trial version contains an intentional licensing restriction.
+The trial application is a realistic fictional OrionTech software
+artifact. It contains an intentional licensing restriction that prevents
+full/lifetime activation.
 
 For example:
 
-``` text
+```text
 ORIONDESK ENTERPRISE
 
 Trial Version
@@ -393,47 +453,73 @@ Remaining:
 [ Activate License ]
 ```
 
-The player must reverse engineer the application to understand how the
-trial restriction works.
+The player must reverse engineer the compiled application to understand
+how the trial and license-validation logic works.
 
-The application should **not** simply contain the flag as a plaintext
-string.
+The application should not simply contain the flag as a plaintext
+string. The player must analyze the program's control flow and identify
+the relevant licensing condition.
 
-Instead, the licensing logic should require analysis of the compiled
-program.
-
-The player discovers the internal license-validation logic and
-determines how the trial restriction can be bypassed.
-
-After successfully modifying or manipulating the program in the isolated
-CTF environment, the software operates as a simulated lifetime/full
-version.
-
-The full version reveals the Challenge 4 flag.
+The intended solution is to modify or otherwise manipulate the program
+in the isolated CTF environment so that the simulated lifetime-license
+state is activated.
 
 ## Player Objective
 
-Reverse engineer the OrionDesk trial application and bypass its
-simulated trial restriction to activate the lifetime version.
+Obtain the OrionDesk Enterprise 4.2 Trial application, reverse engineer
+its license-validation logic, bypass the intentional trial restriction,
+and activate the simulated lifetime version to reveal the C4 flag.
+
+## Player Task
+
+The intended investigation path is:
+
+```text
+C3 decrypted message
+        ↓
+Identify OrionDesk Enterprise 4.2 Trial
+        ↓
+Obtain the trial application
+        ↓
+Execute in controlled environment
+        ↓
+Inspect strings / functions
+        ↓
+Analyze license-validation logic
+        ↓
+Trace control flow
+        ↓
+Identify the trial restriction
+        ↓
+Patch / manipulate the relevant logic
+        ↓
+Activate simulated lifetime version
+        ↓
+Reveal C4 flag
+```
+
+The reverse-engineering task should require actual analysis of the
+compiled application rather than simply searching for the flag.
 
 ## Expected Techniques
 
--   Static binary analysis
--   Dynamic analysis
--   Strings analysis
--   Function identification
--   Control-flow analysis
--   Debugging
--   Ghidra
--   `objdump`
--   `strings`
--   Linux binary analysis
+- Static binary analysis
+- Dynamic analysis
+- Strings analysis
+- Function identification
+- Control-flow analysis
+- Debugging
+- Patching
+- Ghidra
+- `objdump`
+- `strings`
+- Linux binary-analysis tools
 
 ## Recommended Implementation
 
-The binary should contain logic conceptually similar to:
+The binary can contain logic conceptually similar to:
 
-``` text
+```text
 check_license()
        ↓
 check_trial_status()
@@ -444,16 +530,16 @@ show_trial_features()
 ```
 
 The player must understand the control flow and modify the appropriate
-condition.
+condition or branch.
 
 The flag should only become visible after the intended activation state
 is reached.
 
 ## C4 Output
 
-Successful activation:
+Successful activation produces:
 
-``` text
+```text
 ORIONDESK ENTERPRISE
 LIFETIME LICENSE
 

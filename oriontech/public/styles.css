@@ -1,0 +1,24 @@
+
+:root{--navy:#0b1f3a;--blue:#1769aa;--sky:#eaf4fb;--ink:#172033;--muted:#667085;--line:#e4e7ec;--white:#fff;--bg:#f7f9fc}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink);background:#fff;line-height:1.65}
+a{color:inherit;text-decoration:none}.container{width:min(1120px,92%);margin:auto}
+.topbar{background:#07172b;color:#d9e5f2;font-size:13px}.topbar .container{display:flex;justify-content:space-between;padding:8px 0}
+header{background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}.nav{height:76px;display:flex;align-items:center;justify-content:space-between}
+.logo{font-size:24px;font-weight:800;color:var(--navy);letter-spacing:-.5px}.logo span{color:var(--blue)}
+nav{display:flex;gap:22px;align-items:center}nav a{font-size:13px;font-weight:650;color:#344054}nav a:hover{color:var(--blue)}
+.btn{display:inline-block;padding:11px 18px;border-radius:6px;background:var(--blue);color:#fff!important;font-weight:700;font-size:14px}.btn.outline{background:#fff;color:var(--blue)!important;border:1px solid #b9d4e9}
+.hero{background:linear-gradient(120deg,#071a32,#103b63 62%,#1769aa);color:#fff;padding:92px 0 100px}.hero-grid{display:grid;grid-template-columns:1.25fr .75fr;gap:70px;align-items:center}
+.eyebrow{font-size:13px;text-transform:uppercase;letter-spacing:1.6px;font-weight:800;color:#8ec7ee}.hero h1{font-size:52px;line-height:1.1;letter-spacing:-1.8px;margin:15px 0 20px}.hero p{font-size:18px;color:#d7e5f2;max-width:650px}.hero-actions{display:flex;gap:12px;margin-top:30px}
+.hero-card{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);padding:28px;border-radius:12px}.hero-card strong{display:block;font-size:15px}.hero-card p{font-size:14px;margin:6px 0 20px}
+section{padding:76px 0}.section-head{max-width:700px;margin-bottom:38px}.section-head h2{font-size:34px;line-height:1.2;margin:8px 0 12px;letter-spacing:-.8px}.section-head p{color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}.card{border:1px solid var(--line);border-radius:10px;padding:26px;background:#fff}.card h3{margin:0 0 8px;font-size:19px}.card p{color:var(--muted);margin:0}.icon{width:42px;height:42px;border-radius:8px;background:var(--sky);color:var(--blue);display:grid;place-items:center;font-weight:800;margin-bottom:18px}
+.stats{background:var(--bg);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}.stat strong{display:block;font-size:32px;color:var(--navy)}.stat span{color:var(--muted);font-size:14px}
+.page-hero{background:var(--bg);padding:58px 0;border-bottom:1px solid var(--line)}.page-hero h1{font-size:42px;margin:5px 0 8px}.page-hero p{color:var(--muted);max-width:720px}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:start}.split h2{font-size:30px;line-height:1.25}.muted{color:var(--muted)}
+.list{padding:0;margin:20px 0;list-style:none}.list li{padding:11px 0;border-bottom:1px solid var(--line)}
+.team-card h3{margin:16px 0 3px}.role{color:var(--blue);font-size:14px;font-weight:700}
+.project{display:flex;justify-content:space-between;gap:30px;align-items:center}.project+.project{border-top:1px solid var(--line);padding-top:28px;margin-top:28px}.tag{display:inline-block;padding:5px 9px;background:var(--sky);color:var(--blue);border-radius:20px;font-size:12px;font-weight:700}
+.contact-grid{display:grid;grid-template-columns:.8fr 1.2fr;gap:50px}.contact-box{background:var(--bg);padding:28px;border-radius:10px}.field{margin-bottom:17px}.field label{display:block;font-size:13px;font-weight:700;margin-bottom:6px}.field input,.field textarea{width:100%;padding:12px;border:1px solid #d0d5dd;border-radius:6px;font:inherit}.field textarea{min-height:130px}
+footer{background:#07172b;color:#b9c8d8;padding:48px 0 24px}.footer-grid{display:grid;grid-template-columns:1.4fr repeat(3,1fr);gap:35px}.footer-grid h4{color:#fff;margin:0 0 12px}.footer-grid a{display:block;font-size:14px;margin:7px 0}.copyright{border-top:1px solid rgba(255,255,255,.12);margin-top:35px;padding-top:18px;font-size:13px}
+.notice{padding:14px 18px;background:#fff8e6;border:1px solid #f4d58d;border-radius:7px;color:#795b10}
+@media(max-width:800px){nav{display:none}.hero-grid,.split,.contact-grid{grid-template-columns:1fr}.grid{grid-template-columns:1fr}.stat-grid{grid-template-columns:1fr 1fr}.hero h1{font-size:40px}.topbar .container{display:none}.project{display:block}}

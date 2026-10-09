@@ -1,1 +1,26 @@
-{"name":"c1-shadow-profile","version":"1.0.0","type":"module","scripts":{"dev":"tsx src/server.ts","start":"tsx src/server.ts"},"dependencies":{"express":"^5.2.1","express-session":"^1.19.0"},"devDependencies":{"@types/express":"^5.0.6","@types/express-session":"^1.19.0","@types/node":"^22.20.2","tsx":"^4.23.13","typescript":"^7.0.2"},"packageManager":"pnpm@12.4.1"}
+{
+  "name": "oriontech-ctf",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev:c1": "tsx src/server.ts",
+    "dev:c5": "tsx c5/server.ts",
+    "dev": "concurrently --kill-others-on-fail --names C1,C5 \"pnpm run dev:c1\" \"pnpm run dev:c5\"",
+    "start:c1": "tsx src/server.ts",
+    "start:c5": "tsx c5/server.ts"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "express-session": "^1.19.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/express-session": "^1.19.0",
+    "@types/node": "^22.20.2",
+    "concurrently": "^9.2.1",
+    "tsx": "^4.23.13",
+    "typescript": "^7.0.2"
+  },
+  "packageManager": "pnpm@12.4.1"
+}

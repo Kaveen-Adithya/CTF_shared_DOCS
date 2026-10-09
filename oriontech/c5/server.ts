@@ -751,27 +751,12 @@ publicApp.get(
         }
       },
       (error, stdout, stderr) => {
-        const output = stdout || "(PHP script produced no output)";
-        const executionError = error
-          ? `<h2>PHP execution failed</h2><pre>${escapeHtml(stderr || error.message)}</pre>`
-          : "";
+        if (error) {
+          res.status(500).type("text/plain").send(stderr || error.message);
+          return;
+        }
 
-        res
-          .status(error ? 500 : 200)
-          .type("html")
-          .send(
-            page(
-              filename,
-              `
-<div class="hero">
-    <h1>PHP Output: ${escapeHtml(filename)}</h1>
-    ${executionError}
-    <pre style="white-space:pre-wrap;overflow-wrap:anywhere;">${escapeHtml(output)}</pre>
-    <a class="btn" href="/support/uploads">Back to uploaded files</a>
-</div>
-`
-            )
-          );
+        res.status(200).type("html").send(stdout);
       }
     );
   }

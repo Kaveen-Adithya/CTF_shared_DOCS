@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "predev": "pnpm install --frozen-lockfile",
     "dev:c1": "tsx src/server.ts",
     "dev:c5": "tsx c5/server.ts",
     "dev": "concurrently --kill-others-on-fail --names C1,C5 \"pnpm run dev:c1\" \"pnpm run dev:c5\"",

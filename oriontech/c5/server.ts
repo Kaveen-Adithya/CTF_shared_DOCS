@@ -597,7 +597,7 @@ publicApp.post(
       const message =
         error instanceof SupportUploadError
           ? error.message
-          : "The upload could not be processed. Please attach one PDF file.";
+          : "The upload could not be processed. Please try again with one file.";
 
       res.status(statusCode).send(
         page(

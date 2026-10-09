@@ -248,7 +248,7 @@ app.listen(
   "0.0.0.0",
   () => {
     console.log(
-      `OrionTech C1 running on http://0.0.0.0:${PORT}`
+      `OrionTech C1 running on http://localhost:${PORT}`
     );
   }
 );

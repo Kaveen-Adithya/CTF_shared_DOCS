@@ -10,6 +10,9 @@ const app = express();
 const PORT = 3001;
 
 
+// ============================================================
+// Static OrionTech website
+// ============================================================
 
 app.use(
   express.static(
@@ -18,7 +21,18 @@ app.use(
 );
 
 
-
+// ============================================================
+// C4 - OrionDesk Enterprise 4.2 Trial
+// ============================================================
+//
+// The binary is intentionally kept outside /public.
+//
+// Player download:
+//     /downloads/OrionDesk
+//
+// Actual file:
+//     /c4/build/OrionDesk
+// ============================================================
 
 const orionDeskBinary = path.join(
   __dirname,
@@ -51,7 +65,9 @@ app.get(
 );
 
 
-
+// ============================================================
+// robots.txt
+// ============================================================
 
 app.get(
   "/robots.txt",
@@ -68,7 +84,9 @@ Disallow: /projects/legacy-orionhub.html
 );
 
 
-
+// ============================================================
+// Start server
+// ============================================================
 
 app.listen(
   PORT,

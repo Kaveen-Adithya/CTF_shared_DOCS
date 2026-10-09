@@ -1,495 +1,852 @@
-import express from "express";
-import path from "path";
-import fs from "fs";
+import express, { Request, Response } from "express";
+import path from "node:path";
+import fs from "node:fs";
 
-const app = express();
-const internal = express();
+const publicApp = express();
+const internalApp = express();
 
 const PUBLIC_PORT = 3005;
 const INTERNAL_PORT = 9105;
 
-const BASE_DIR = path.resolve(process.cwd());
+const HOST = "0.0.0.0";
+const INTERNAL_HOST = "127.0.0.1";
+
+const C5_FLAG = "ECLIPSE{blind_relay}";
+
 const EVIDENCE_FILE = path.join(
-  BASE_DIR,
+  process.cwd(),
   "c5",
   "evidence",
   "network-diagnostics-041.pcapng"
 );
 
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
+const INCIDENT_ID = "OT-INC-2026-041";
+const EVIDENCE_NAME = "network-diagnostics-041.pcapng";
 
-internal.use(express.urlencoded({ extended: true }));
-internal.use(express.json());
+publicApp.use(express.urlencoded({ extended: true }));
+publicApp.use(express.json());
 
+internalApp.use(express.urlencoded({ extended: true }));
+internalApp.use(express.json());
 
-// ============================================================
-// HTML helpers
-// ============================================================
+/* ============================================================
+   Common HTML
+   ============================================================ */
 
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+function page(
+  title: string,
+  content: string,
+  active: string = ""
+): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${title} | OrionHub</title>
+
+<style>
+* {
+    box-sizing: border-box;
 }
 
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: #f4f6f8;
+    color: #202630;
+}
 
-// ============================================================
-// Public OrionHub
-// ============================================================
+header {
+    background: #17212b;
+    color: white;
+    padding: 0;
+}
 
-app.get("/", (_req, res) => {
-  res.type("html").send(`
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>OrionHub</title>
-    <style>
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: #f4f6f8;
-            color: #222;
-        }
+.nav {
+    max-width: 1180px;
+    margin: auto;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+}
 
-        header {
-            background: #17212b;
-            color: white;
-            padding: 20px 40px;
-        }
+.logo {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+}
 
-        header h1 {
-            margin: 0;
-        }
+.nav-links {
+    display: flex;
+    gap: 22px;
+}
 
-        nav {
-            background: #243442;
-            padding: 12px 40px;
-        }
+.nav-links a {
+    color: #dce3ea;
+    text-decoration: none;
+    font-size: 14px;
+}
 
-        nav a {
-            color: white;
-            text-decoration: none;
-            margin-right: 25px;
-        }
+.nav-links a:hover {
+    color: white;
+}
 
-        main {
-            max-width: 1000px;
-            margin: 40px auto;
-            padding: 0 20px;
-        }
+.container {
+    max-width: 1180px;
+    margin: 40px auto;
+    padding: 0 24px;
+}
 
-        .card {
-            background: white;
-            padding: 25px;
-            margin-bottom: 20px;
-            border-radius: 6px;
-            box-shadow: 0 2px 8px rgba(0,0,0,.08);
-        }
+.hero {
+    background: white;
+    border: 1px solid #e0e5ea;
+    border-radius: 8px;
+    padding: 38px;
+    margin-bottom: 24px;
+}
 
-        code {
-            background: #eee;
-            padding: 2px 5px;
-        }
-    </style>
+.hero h1 {
+    margin-top: 0;
+    font-size: 32px;
+}
+
+.hero p {
+    color: #5f6b76;
+    line-height: 1.7;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+}
+
+.card {
+    background: white;
+    border: 1px solid #e0e5ea;
+    border-radius: 8px;
+    padding: 24px;
+}
+
+.card h3 {
+    margin-top: 0;
+}
+
+.card p {
+    color: #66717d;
+    line-height: 1.6;
+}
+
+.btn {
+    display: inline-block;
+    background: #2563eb;
+    color: white;
+    padding: 11px 18px;
+    border-radius: 5px;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.btn:hover {
+    background: #1d4ed8;
+}
+
+input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ccd3da;
+    border-radius: 5px;
+    margin: 8px 0 16px;
+    font-size: 14px;
+}
+
+label {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.notice {
+    padding: 14px 16px;
+    border-radius: 6px;
+    background: #eef5ff;
+    border: 1px solid #cfe0ff;
+    margin-bottom: 20px;
+}
+
+pre {
+    background: #111827;
+    color: #e5e7eb;
+    padding: 20px;
+    border-radius: 7px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+footer {
+    max-width: 1180px;
+    margin: 60px auto 30px;
+    padding: 0 24px;
+    color: #89939d;
+    font-size: 13px;
+}
+
+@media (max-width: 800px) {
+    .grid {
+        grid-template-columns: 1fr;
+    }
+
+    .nav-links {
+        display: none;
+    }
+}
+</style>
 </head>
 
 <body>
 
 <header>
-    <h1>OrionHub</h1>
+    <div class="nav">
+        <div class="logo">OrionHub</div>
+
+        <div class="nav-links">
+            <a href="/">Dashboard</a>
+            <a href="/services">Services</a>
+            <a href="/payments">Payments</a>
+            <a href="/invoices">Invoices</a>
+            <a href="/support">Support</a>
+            <a href="/documents">Documents</a>
+        </div>
+    </div>
 </header>
 
-<nav>
-    <a href="/">Home</a>
-    <a href="/customer-login">Customer Login</a>
-    <a href="/staff-login">Staff Login</a>
-    <a href="/services">Services</a>
-    <a href="/payments">Payments</a>
-    <a href="/invoices">Invoices</a>
-    <a href="/support">Support</a>
-</nav>
+<div class="container">
+${content}
+</div>
 
-<main>
-
-    <div class="card">
-        <h2>Welcome to OrionHub</h2>
-        <p>
-            OrionTech's central customer and staff platform.
-        </p>
-    </div>
-
-    <div class="card">
-        <h3>Document Services</h3>
-        <p>
-            OrionHub provides document and attachment processing
-            services for authorized users.
-        </p>
-    </div>
-
-    <div class="card">
-        <h3>Customer Services</h3>
-        <p>
-            Manage payments, invoices, support requests and
-            account information.
-        </p>
-    </div>
-
-</main>
+<footer>
+    OrionHub &copy; 2026 OrionTech Solutions
+</footer>
 
 </body>
-</html>
-  `);
+</html>`;
+}
+
+/* ============================================================
+   Public OrionHub
+   ============================================================ */
+
+publicApp.get("/", (_req: Request, res: Response) => {
+  res.send(
+    page(
+      "Dashboard",
+      `
+<div class="hero">
+    <h1>Welcome to OrionHub</h1>
+
+    <p>
+        OrionHub is the central customer and service management platform
+        used by OrionTech Solutions.
+    </p>
+
+    <p>
+        Manage services, payments, invoices, support requests and
+        documents from one platform.
+    </p>
+</div>
+
+<div class="grid">
+
+    <div class="card">
+        <h3>Services</h3>
+        <p>
+            View OrionTech services and active subscriptions.
+        </p>
+        <a class="btn" href="/services">View Services</a>
+    </div>
+
+    <div class="card">
+        <h3>Payments</h3>
+        <p>
+            Review payment activity and transaction information.
+        </p>
+        <a class="btn" href="/payments">Payments</a>
+    </div>
+
+    <div class="card">
+        <h3>Support</h3>
+        <p>
+            Contact the OrionTech support team and review requests.
+        </p>
+        <a class="btn" href="/support">Support</a>
+    </div>
+
+</div>
+`
+    )
+  );
 });
 
+publicApp.get("/services", (_req: Request, res: Response) => {
+  res.send(
+    page(
+      "Services",
+      `
+<div class="hero">
+    <h1>Services</h1>
 
-// ============================================================
-// Public placeholder routes
-// ============================================================
+    <div class="grid">
 
-app.get(
-  [
-    "/customer-login",
-    "/staff-login",
-    "/services",
-    "/payments",
-    "/invoices",
-    "/support"
-  ],
-  (req, res) => {
+        <div class="card">
+            <h3>Cloud Infrastructure</h3>
+            <p>
+                Managed infrastructure and cloud deployment services.
+            </p>
+        </div>
 
-    res.type("html").send(`
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>OrionHub</title>
-</head>
+        <div class="card">
+            <h3>Managed IT</h3>
+            <p>
+                Enterprise infrastructure monitoring and support.
+            </p>
+        </div>
 
-<body>
+        <div class="card">
+            <h3>Security Services</h3>
+            <p>
+                Security assessment and managed security services.
+            </p>
+        </div>
 
-<h1>OrionHub</h1>
+    </div>
+</div>
+`
+    )
+  );
+});
 
-<h2>${escapeHtml(req.path)}</h2>
+publicApp.get("/payments", (_req: Request, res: Response) => {
+  res.send(
+    page(
+      "Payments",
+      `
+<div class="hero">
+    <h1>Payments</h1>
 
-<p>
-    OrionHub service endpoint.
-</p>
+    <p>
+        Recent payment activity associated with your OrionHub account.
+    </p>
 
-<p>
-    This functionality is currently available
-    to authorized OrionHub users.
-</p>
+    <table style="width:100%; border-collapse:collapse;">
+        <tr>
+            <th style="text-align:left;padding:12px;border-bottom:1px solid #ddd;">
+                Transaction
+            </th>
 
-<a href="/">Return to OrionHub</a>
+            <th style="text-align:left;padding:12px;border-bottom:1px solid #ddd;">
+                Status
+            </th>
 
-</body>
-</html>
-    `);
+            <th style="text-align:left;padding:12px;border-bottom:1px solid #ddd;">
+                Amount
+            </th>
+        </tr>
+
+        <tr>
+            <td style="padding:12px;">TXN-2026-1024</td>
+            <td style="padding:12px;">Completed</td>
+            <td style="padding:12px;">LKR 18,500</td>
+        </tr>
+
+        <tr>
+            <td style="padding:12px;">TXN-2026-1017</td>
+            <td style="padding:12px;">Completed</td>
+            <td style="padding:12px;">LKR 7,250</td>
+        </tr>
+
+    </table>
+</div>
+`
+    )
+  );
+});
+
+publicApp.get("/invoices", (_req: Request, res: Response) => {
+  res.send(
+    page(
+      "Invoices",
+      `
+<div class="hero">
+    <h1>Invoices</h1>
+
+    <div class="card">
+        <h3>INV-2026-041</h3>
+        <p>Enterprise Cloud Services</p>
+        <p><strong>Status:</strong> Paid</p>
+    </div>
+
+    <br>
+
+    <div class="card">
+        <h3>INV-2026-038</h3>
+        <p>Managed IT Services</p>
+        <p><strong>Status:</strong> Paid</p>
+    </div>
+</div>
+`
+    )
+  );
+});
+
+publicApp.get("/support", (_req: Request, res: Response) => {
+  res.send(
+    page(
+      "Support",
+      `
+<div class="hero">
+    <h1>Support</h1>
+
+    <p>
+        Submit a support request to OrionTech Solutions.
+    </p>
+
+    <form method="POST" action="/support">
+
+        <label>Subject</label>
+        <input
+            name="subject"
+            placeholder="Describe your issue"
+            required
+        >
+
+        <label>Description</label>
+        <input
+            name="description"
+            placeholder="Describe the problem"
+            required
+        >
+
+        <button class="btn" type="submit">
+            Submit Request
+        </button>
+
+    </form>
+</div>
+`
+    )
+  );
+});
+
+publicApp.post("/support", (_req: Request, res: Response) => {
+  res.send(
+    page(
+      "Support Request",
+      `
+<div class="hero">
+    <h1>Support Request Submitted</h1>
+
+    <div class="notice">
+        Your support request has been submitted successfully.
+    </div>
+
+    <a class="btn" href="/">Return to Dashboard</a>
+</div>
+`
+    )
+  );
+});
+
+/* ============================================================
+   Document Preview
+   ============================================================ */
+
+/*
+ * IMPORTANT:
+ *
+ * This functionality is intentionally vulnerable for the CTF.
+ *
+ * It accepts a user-controlled URL and performs a server-side
+ * HTTP request to that URL.
+ *
+ * This is the SSRF vulnerability used by C5.
+ */
+
+publicApp.get("/documents", (_req: Request, res: Response) => {
+  res.send(
+    page(
+      "Document Preview",
+      `
+<div class="hero">
+
+    <h1>Document Preview</h1>
+
+    <p>
+        OrionHub can retrieve publicly available documents and
+        generate a preview.
+    </p>
+
+    <p>
+        Enter the URL of a document below.
+    </p>
+
+    <form method="POST" action="/tools/document-preview">
+
+        <label for="url">
+            Document URL
+        </label>
+
+        <input
+            id="url"
+            name="url"
+            type="url"
+            placeholder="https://example.com/report.pdf"
+            required
+        >
+
+        <button class="btn" type="submit">
+            Preview Document
+        </button>
+
+    </form>
+
+</div>
+`
+    )
+  );
+});
+
+/* ============================================================
+   SSRF Helper
+   ============================================================ */
+
+async function performServerSideRequest(
+  targetUrl: string
+): Promise<Response> {
+  return await fetch(targetUrl, {
+    method: "GET",
+    redirect: "manual",
+    signal: AbortSignal.timeout(5000),
+
+    headers: {
+      "User-Agent": "OrionHub-Document-Preview/1.0"
+    }
+  });
+}
+
+/* ============================================================
+   Vulnerable Document Preview Endpoint
+   ============================================================ */
+
+publicApp.post(
+  "/tools/document-preview",
+  async (req: Request, res: Response) => {
+    const targetUrl = String(req.body?.url || "").trim();
+
+    if (!targetUrl) {
+      res.status(400).send(
+        page(
+          "Document Preview",
+          `
+<div class="hero">
+    <h1>Document Preview</h1>
+
+    <div class="notice">
+        A document URL is required.
+    </div>
+
+    <a class="btn" href="/documents">
+        Back
+    </a>
+</div>
+`
+        )
+      );
+
+      return;
+    }
+
+    let parsedUrl: URL;
+
+    try {
+      parsedUrl = new URL(targetUrl);
+    } catch {
+      res.status(400).send(
+        page(
+          "Document Preview",
+          `
+<div class="hero">
+    <h1>Invalid URL</h1>
+
+    <div class="notice">
+        The supplied document URL is invalid.
+    </div>
+</div>
+`
+        )
+      );
+
+      return;
+    }
+
+    if (!["http:", "https:"].includes(parsedUrl.protocol)) {
+      res.status(400).send(
+        page(
+          "Document Preview",
+          `
+<div class="hero">
+    <h1>Unsupported URL</h1>
+
+    <div class="notice">
+        Only HTTP and HTTPS URLs are supported.
+    </div>
+</div>
+`
+        )
+      );
+
+      return;
+    }
+
+    try {
+      /*
+       * INTENTIONAL SSRF
+       *
+       * No hostname allow-list is used here.
+       *
+       * This is deliberately vulnerable inside the isolated
+       * CTF environment.
+       */
+
+      const upstream = await performServerSideRequest(targetUrl);
+
+      const contentType =
+        upstream.headers.get("content-type") ||
+        "application/octet-stream";
+
+      const contentDisposition =
+        upstream.headers.get("content-disposition");
+
+      const buffer = Buffer.from(await upstream.arrayBuffer());
+
+      /*
+       * Binary evidence such as the PCAP must be returned
+       * unchanged.
+       */
+
+      if (
+        contentType.includes("application/vnd.tcpdump.pcap") ||
+        contentType.includes("application/octet-stream") ||
+        contentType.includes("application/pcap") ||
+        contentDisposition?.toLowerCase().includes("attachment")
+      ) {
+        res.status(upstream.status);
+
+        res.setHeader("Content-Type", contentType);
+
+        if (contentDisposition) {
+          res.setHeader(
+            "Content-Disposition",
+            contentDisposition
+          );
+        }
+
+        res.setHeader(
+          "Content-Length",
+          buffer.length.toString()
+        );
+
+        res.send(buffer);
+
+        return;
+      }
+
+      /*
+       * Normal text/HTML/JSON responses are displayed inside
+       * the preview page.
+       */
+
+      const body = buffer.toString("utf-8");
+
+      res.status(upstream.status);
+
+      res.send(
+        page(
+          "Document Preview",
+          `
+<div class="hero">
+
+    <h1>Document Preview</h1>
+
+    <div class="notice">
+        Remote document retrieved successfully.
+    </div>
+
+    <p>
+        Source:
+        <strong>${escapeHtml(targetUrl)}</strong>
+    </p>
+
+    <p>
+        HTTP Status:
+        <strong>${upstream.status}</strong>
+    </p>
+
+    <p>
+        Content-Type:
+        <strong>${escapeHtml(contentType)}</strong>
+    </p>
+
+    <pre>${escapeHtml(body)}</pre>
+
+</div>
+`
+        )
+      );
+
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Unknown request error";
+
+      res.status(502).send(
+        page(
+          "Document Preview",
+          `
+<div class="hero">
+
+    <h1>Preview Failed</h1>
+
+    <div class="notice">
+        OrionHub could not retrieve the requested document.
+    </div>
+
+    <pre>${escapeHtml(message)}</pre>
+
+    <a class="btn" href="/documents">
+        Back
+    </a>
+
+</div>
+`
+        )
+      );
+    }
   }
 );
 
+/* ============================================================
+   Utility
+   ============================================================ */
 
-// ============================================================
-// Hidden document preview page
-// ============================================================
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
 
-app.get("/tools/document-preview", (_req, res) => {
+/* ============================================================
+   Internal Incident Service
+   ============================================================ */
 
+/*
+ * This service is deliberately bound to 127.0.0.1.
+ *
+ * A player cannot directly connect to this service from outside
+ * the machine.
+ *
+ * The intended route is:
+ *
+ * Player → OrionHub :3005 → SSRF → 127.0.0.1:9105
+ */
+
+internalApp.get("/", (_req: Request, res: Response) => {
   res.type("html").send(`
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8">
-    <title>Document Preview</title>
-
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 900px;
-            margin: 50px auto;
-        }
-
-        input {
-            width: 80%;
-            padding: 10px;
-        }
-
-        button {
-            padding: 10px 20px;
-        }
-
-        .notice {
-            background: #f4f4f4;
-            padding: 15px;
-            margin-top: 20px;
-        }
-    </style>
+<meta charset="UTF-8">
+<title>OrionTech Internal Service</title>
 </head>
-
 <body>
+<h1>OrionTech Internal Service</h1>
 
-<h1>Document / Attachment Preview</h1>
-
-<p>
-    Enter the URL of a document that OrionHub should preview.
-</p>
-
-<form method="POST" action="/tools/document-preview">
-
-    <input
-        type="text"
-        name="url"
-        placeholder="https://example.com/report.pdf"
-    >
-
-    <button type="submit">
-        Preview
-    </button>
-
-</form>
-
-<div class="notice">
-    Supported document preview service.
-</div>
+<p>Service: Incident Management</p>
+<p>Status: Operational</p>
+<p>Version: 1.4.2</p>
 
 </body>
 </html>
-  `);
+`);
 });
 
-
-// ============================================================
-// Vulnerable document preview
-//
-// INTENTIONAL CTF SSRF
-// ============================================================
-
-app.post("/tools/document-preview", async (req, res) => {
-
-  const target = String(req.body?.url || "").trim();
-
-  if (!target) {
-
-    return res.status(400).type("text").send(
-      "Missing required parameter: url"
-    );
-  }
-
-
-  let parsed: URL;
-
-  try {
-
-    parsed = new URL(target);
-
-  } catch {
-
-    return res.status(400).type("text").send(
-      "Invalid URL."
-    );
-  }
-
-
-  try {
-
-    /*
-     * INTENTIONAL VULNERABILITY:
-     *
-     * The server makes an outbound request to the
-     * user-controlled URL without restricting destinations.
-     *
-     * This is the C5 SSRF condition.
-     */
-
-    const response = await fetch(parsed.toString(), {
-      redirect: "manual",
+internalApp.get(
+  "/internal/status",
+  (_req: Request, res: Response) => {
+    res.json({
+      service: "OrionTech Incident Management",
+      status: "operational",
+      version: "1.4.2",
+      environment: "internal",
+      authorization: "internal-network-trust"
     });
-
-
-    const body = await response.text();
-
-    res.status(200).type("html").send(`
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Document Preview</title>
-
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 1100px;
-            margin: 40px auto;
-        }
-
-        pre {
-            background: #111;
-            color: #eee;
-            padding: 20px;
-            overflow-x: auto;
-            white-space: pre-wrap;
-        }
-
-        .meta {
-            background: #eee;
-            padding: 15px;
-            margin-bottom: 20px;
-        }
-    </style>
-</head>
-
-<body>
-
-<h1>Document Preview</h1>
-
-<div class="meta">
-
-<strong>Requested URL:</strong>
-${escapeHtml(target)}
-
-<br>
-
-<strong>HTTP Status:</strong>
-${response.status}
-
-</div>
-
-<pre>${escapeHtml(body)}</pre>
-
-</body>
-</html>
-    `);
-
-  } catch (error) {
-
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Unknown error";
-
-    res.status(502).type("text").send(
-      `Document preview request failed: ${message}`
-    );
   }
-});
+);
 
+internalApp.get(
+  "/internal/api",
+  (_req: Request, res: Response) => {
+    res.json({
+      service: "OrionTech Incident Management",
+      version: "1.4.2",
+      endpoints: [
+        "/internal/status",
+        "/internal/api",
+        "/internal/incidents"
+      ]
+    });
+  }
+);
 
-// ============================================================
-// Internal service
-//
-// IMPORTANT:
-// This service listens ONLY on 127.0.0.1.
-// It is not directly exposed to external players.
-//
-// C5 relies on OrionHub SSRF to reach this service.
-// ============================================================
+internalApp.get(
+  "/internal/incidents",
+  (_req: Request, res: Response) => {
+    res.json({
+      incidents: [
+        {
+          id: "OT-INC-2026-038",
+          status: "Resolved"
+        },
+        {
+          id: "OT-INC-2026-039",
+          status: "Closed"
+        },
+        {
+          id: INCIDENT_ID,
+          status: "Under Investigation"
+        }
+      ]
+    });
+  }
+);
 
-internal.get("/", (_req, res) => {
-
-  res.type("text").send(`
-OrionTech Internal Service
-==========================
-
-Available internal endpoints:
-
-/internal/status
-/internal/api
-/internal/incidents
-
-Internal service version: 2.4.1
-  `);
-});
-
-
-// ============================================================
-// Internal status
-// ============================================================
-
-internal.get("/internal/status", (_req, res) => {
-
-  res.type("text").send(`
-ORIONTECH INTERNAL SERVICE STATUS
-
-Service: Incident Management Service
-Version: 2.4.1
-Status: Operational
-
-Services:
-- Incident Management
-- Evidence Repository
-- Internal Audit
-- Security Operations
-
-Network:
-Internal OrionTech Service Network
-
-Authorization:
-Internal network trust assumed.
-  `);
-});
-
-
-// ============================================================
-// Internal API discovery
-// ============================================================
-
-internal.get("/internal/api", (_req, res) => {
-
-  res.type("text").send(`
-ORIONTECH INTERNAL API
-
-Available endpoints:
-
-GET /internal/status
-GET /internal/api
-GET /internal/incidents
-
-Incident API:
-
-GET /internal/incidents
-GET /internal/incidents/OT-INC-2026-041
-
-Evidence API:
-
-GET /internal/evidence
-GET /internal/evidence/network-diagnostics-041.pcapng
-  `);
-});
-
-
-// ============================================================
-// Incident listing
-// ============================================================
-
-internal.get("/internal/incidents", (_req, res) => {
-
-  res.type("text").send(`
-ORIONTECH INCIDENT DATABASE
-
-Available incidents:
-
-OT-INC-2026-041
-  `);
-});
-
-
-// ============================================================
-// Target incident
-// ============================================================
-
-internal.get(
-  "/internal/incidents/OT-INC-2026-041",
-  (_req, res) => {
-
+internalApp.get(
+  `/internal/incidents/${INCIDENT_ID}`,
+  (_req: Request, res: Response) => {
     res.type("text").send(`
-ORIONTECH INTERNAL INCIDENT RECORD
+ORIONTECH INCIDENT MANAGEMENT
+========================================
 
-Incident: OT-INC-2026-041
+Incident:
+${INCIDENT_ID}
 
 Title:
 Unexpected internal network communication
@@ -503,77 +860,48 @@ High
 Affected Component:
 OrionHub Document Preview Service
 
+Description:
+An unexpected communication pattern was detected
+between the OrionHub document preview component and
+an internal OrionTech service.
+
+The incident requires network-level investigation.
+
 Evidence:
-network-diagnostics-041.pcapng
+${EVIDENCE_NAME}
 
 Evidence Location:
-/internal/evidence/network-diagnostics-041.pcapng
+/internal/evidence/${EVIDENCE_NAME}
 
-Further analysis of PCAP evidence is required.
+Further analysis of PCAP is required.
 
-C5_FLAG: ECLIPSE{blind_relay}
-    `);
+C5_FLAG:
+${C5_FLAG}
+`);
   }
 );
 
+/*
+ * The evidence file is intentionally NOT listed from
+ * /internal/api.
+ *
+ * The player must first discover the incident record.
+ */
 
-// ============================================================
-// Evidence repository listing
-// ============================================================
-
-internal.get("/internal/evidence", (_req, res) => {
-
-  res.type("text").send(`
-ORIONTECH INTERNAL EVIDENCE REPOSITORY
-
-Available evidence:
-
-network-diagnostics-041.pcapng
-
-Access:
-Internal service only.
-  `);
-});
-
-
-// ============================================================
-// Actual PCAP evidence
-//
-// IMPORTANT:
-// This route exists ONLY on the internal service.
-//
-// There is NO equivalent public route.
-//
-// Therefore:
-//
-// External Player
-//       |
-//       v
-// OrionHub SSRF
-//       |
-//       v
-// 127.0.0.1:9105
-//       |
-//       v
-// PCAP
-// ============================================================
-
-internal.get(
-  "/internal/evidence/network-diagnostics-041.pcapng",
-  (_req, res) => {
-
+internalApp.get(
+  `/internal/evidence/${EVIDENCE_NAME}`,
+  (_req: Request, res: Response) => {
     if (!fs.existsSync(EVIDENCE_FILE)) {
-
-      return res.status(404).type("text").send(
-        "Evidence file unavailable."
+      res.status(404).type("text").send(
+        "Evidence file is unavailable."
       );
+
+      return;
     }
 
+    const stats = fs.statSync(EVIDENCE_FILE);
 
-    const stat = fs.statSync(
-      EVIDENCE_FILE
-    );
-
+    res.status(200);
 
     res.setHeader(
       "Content-Type",
@@ -581,56 +909,71 @@ internal.get(
     );
 
     res.setHeader(
-      "Content-Length",
-      stat.size.toString()
+      "Content-Disposition",
+      `attachment; filename="${EVIDENCE_NAME}"`
     );
 
     res.setHeader(
-      "Content-Disposition",
-      'attachment; filename="network-diagnostics-041.pcapng"'
+      "Content-Length",
+      stats.size.toString()
     );
 
-
-    res.sendFile(
-      EVIDENCE_FILE
-    );
+    res.sendFile(EVIDENCE_FILE);
   }
 );
 
+/* ============================================================
+   Direct Access Protection
+   ============================================================ */
 
-// ============================================================
-// Start public OrionHub
-// ============================================================
+/*
+ * The internal service is NOT exposed on the public application.
+ *
+ * Therefore:
+ *
+ * http://SERVER:3005/internal/status
+ *
+ * should NOT work.
+ *
+ * Only:
+ *
+ * http://127.0.0.1:9105/internal/status
+ *
+ * works from the server itself.
+ */
 
-app.listen(
-  PUBLIC_PORT,
-  "0.0.0.0",
-  () => {
+/* ============================================================
+   Start Servers
+   ============================================================ */
 
-    console.log(
-      `OrionHub listening on 0.0.0.0:${PUBLIC_PORT}`
-    );
+publicApp.listen(PUBLIC_PORT, HOST, () => {
+  console.log(
+    `[C5] Public OrionHub listening on http://${HOST}:${PUBLIC_PORT}`
+  );
+});
 
-  }
-);
-
-
-// ============================================================
-// Start internal service
-// ============================================================
-
-internal.listen(
+internalApp.listen(
   INTERNAL_PORT,
-  "127.0.0.1",
+  INTERNAL_HOST,
   () => {
-
     console.log(
-      `Internal service listening on 127.0.0.1:${INTERNAL_PORT}`
+      `[C5] Internal incident service listening on http://${INTERNAL_HOST}:${INTERNAL_PORT}`
     );
 
     console.log(
-      `Evidence file: ${EVIDENCE_FILE}`
+      `[C5] Evidence file: ${EVIDENCE_FILE}`
     );
 
+    if (fs.existsSync(EVIDENCE_FILE)) {
+      const stats = fs.statSync(EVIDENCE_FILE);
+
+      console.log(
+        `[C5] PCAP found: ${stats.size} bytes`
+      );
+    } else {
+      console.error(
+        `[C5] ERROR: PCAP not found`
+      );
+    }
   }
 );

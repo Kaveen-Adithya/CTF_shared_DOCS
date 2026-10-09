@@ -1,7 +1,7 @@
 import express, { Request, Response } from "express";
 import path from "node:path";
 import fs from "node:fs";
-import { randomUUID } from "node:crypto";
+import { execFile } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const publicApp = express();
@@ -34,8 +34,34 @@ const MAX_SUPPORT_REQUEST_SIZE = MAX_SUPPORT_UPLOAD_SIZE + 64 * 1024;
 
 interface SupportAttachment {
   originalName: string;
-  mimeType: string;
   buffer: Buffer;
+}
+
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (character) => {
+    const entities: Record<string, string> = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    };
+
+    return entities[character];
+  });
+}
+
+function safeUploadName(originalName: string): string {
+  const baseName = path.posix.basename(originalName.replace(/\\/g, "/"));
+  const safeName = baseName
+    .replace(/[^a-zA-Z0-9._-]/g, "_")
+    .slice(0, 180);
+
+  if (!safeName || safeName === "." || safeName === "..") {
+    throw new SupportUploadError("The uploaded file name is invalid.");
+  }
+
+  return safeName;
 }
 
 class SupportUploadError extends Error {
@@ -64,7 +90,7 @@ async function parseSupportAttachment(
     contentLength > MAX_SUPPORT_REQUEST_SIZE
   ) {
     throw new SupportUploadError(
-      "The payment slip must be no larger than 10 MB.",
+      "The uploaded file must be no larger than 10 MB.",
       413
     );
   }
@@ -78,7 +104,7 @@ async function parseSupportAttachment(
 
     if (requestSize > MAX_SUPPORT_REQUEST_SIZE) {
       throw new SupportUploadError(
-        "The payment slip must be no larger than 10 MB.",
+        "The uploaded file must be no larger than 10 MB.",
         413
       );
     }
@@ -104,24 +130,27 @@ async function parseSupportAttachment(
       continue;
     }
 
+    if (value.name === "" && value.size === 0) {
+      continue;
+    }
+
     fileCount += 1;
 
     if (fieldName !== "paymentSlip" || fileCount > 1) {
       throw new SupportUploadError(
-        "Attach only one payment slip using the provided upload field."
+        "Upload only one file using the provided upload field."
       );
     }
 
     if (value.size > MAX_SUPPORT_UPLOAD_SIZE) {
       throw new SupportUploadError(
-        "The payment slip must be no larger than 10 MB.",
+        "The uploaded file must be no larger than 10 MB.",
         413
       );
     }
 
     attachment = {
       originalName: value.name,
-      mimeType: value.type,
       buffer: Buffer.from(await value.arrayBuffer())
     };
   }
@@ -537,12 +566,11 @@ publicApp.get("/support", (_req: Request, res: Response) => {
             required
         >
 
-        <label for="payment-slip">Payment slip (PDF, up to 10 MB)</label>
+        <label for="payment-slip">Upload a file (up to 10 MB)</label>
         <input
             id="payment-slip"
             name="paymentSlip"
             type="file"
-            accept=".pdf,application/pdf"
         >
 
         <button class="btn" type="submit">
@@ -587,35 +615,34 @@ publicApp.post(
       return;
     }
 
+    let uploadedName: string | undefined;
     if (attachment) {
-      const isPdf =
-        path.extname(attachment.originalName).toLowerCase() === ".pdf" &&
-        attachment.mimeType === "application/pdf" &&
-        attachment.buffer.subarray(0, 5).equals(Buffer.from("%PDF-"));
-
-      if (!isPdf) {
-        res.status(415).send(
-          page(
-            "Support Request",
-            `
+      uploadedName = safeUploadName(attachment.originalName);
+      await fs.promises.mkdir(SUPPORT_UPLOADS_DIR, { recursive: true });
+      try {
+        await fs.promises.writeFile(
+          path.join(SUPPORT_UPLOADS_DIR, uploadedName),
+          attachment.buffer,
+          { flag: "wx", mode: 0o600 }
+        );
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === "EEXIST") {
+          res.status(409).send(
+            page(
+              "Support Request",
+              `
 <div class="hero">
-    <h1>Unsupported File</h1>
-    <div class="notice">Only valid PDF payment slips are accepted.</div>
+    <h1>Upload Failed</h1>
+    <div class="notice">A file with that name already exists. Rename the file and try again.</div>
     <a class="btn" href="/support">Back to Support</a>
 </div>
 `
-          )
-        );
-
-        return;
+            )
+          );
+          return;
+        }
+        throw error;
       }
-
-      await fs.promises.mkdir(SUPPORT_UPLOADS_DIR, { recursive: true });
-      await fs.promises.writeFile(
-        path.join(SUPPORT_UPLOADS_DIR, `${randomUUID()}.pdf`),
-        attachment.buffer,
-        { flag: "wx", mode: 0o600 }
-      );
     }
 
     res.send(
@@ -626,13 +653,140 @@ publicApp.post(
     <h1>Support Request Submitted</h1>
 
     <div class="notice">
-        Your support request has been submitted successfully.${attachment ? " The payment slip was uploaded securely." : ""}
+        Your support request has been submitted successfully.${uploadedName ? ` Uploaded: ${escapeHtml(uploadedName)}.` : ""}
     </div>
 
+    <a class="btn" href="/support/uploads">View uploaded files</a>
     <a class="btn" href="/">Return to Dashboard</a>
 </div>
 `
       )
+    );
+  }
+);
+
+publicApp.get("/support/uploads", async (_req: Request, res: Response) => {
+  try {
+    const entries = await fs.promises.readdir(SUPPORT_UPLOADS_DIR, {
+      withFileTypes: true
+    });
+    const files = entries
+      .filter((entry) => entry.isFile())
+      .map((entry) => entry.name)
+      .sort((left, right) => left.localeCompare(right));
+
+    const fileLinks = files.length
+      ? files
+          .map(
+            (name) =>
+              `<li><a href="/support/uploads/${encodeURIComponent(name)}">${escapeHtml(name)}</a></li>`
+          )
+          .join("\n")
+      : "<li>No uploaded files yet.</li>";
+
+    res.send(
+      page(
+        "Uploaded Files",
+        `
+<div class="hero">
+    <h1>Uploaded Files</h1>
+    <p>Select a file to view it. PHP files run when opened.</p>
+    <ul>${fileLinks}</ul>
+    <a class="btn" href="/support">Upload another file</a>
+</div>
+`
+      )
+    );
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      res.send(
+        page(
+          "Uploaded Files",
+          `
+<div class="hero">
+    <h1>Uploaded Files</h1>
+    <p>No uploaded files yet.</p>
+    <a class="btn" href="/support">Upload a file</a>
+</div>
+`
+        )
+      );
+      return;
+    }
+
+    console.error("[C5] Failed to list support uploads:", error);
+    res.status(500).send("Unable to list uploaded files.");
+  }
+});
+
+publicApp.get(
+  "/support/uploads/:filename",
+  async (req: Request, res: Response) => {
+    const filename = path.basename(req.params.filename);
+
+    if (!filename || filename !== req.params.filename) {
+      res.sendStatus(400);
+      return;
+    }
+
+    const filePath = path.join(SUPPORT_UPLOADS_DIR, filename);
+
+    try {
+      const fileStats = await fs.promises.stat(filePath);
+      if (!fileStats.isFile()) {
+        res.sendStatus(404);
+        return;
+      }
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+        res.sendStatus(404);
+        return;
+      }
+      throw error;
+    }
+
+    if (path.extname(filename).toLowerCase() !== ".php") {
+      res.type("application/octet-stream").download(filePath, filename);
+      return;
+    }
+
+    // Intentional CTF behavior: uploaded PHP scripts execute through the PHP CLI.
+    execFile(
+      "php",
+      [filePath],
+      {
+        cwd: SUPPORT_UPLOADS_DIR,
+        timeout: 5000,
+        maxBuffer: 1024 * 1024,
+        windowsHide: true,
+        env: {
+          PATH: process.env.PATH || "",
+          HOME: SUPPORT_UPLOADS_DIR
+        }
+      },
+      (error, stdout, stderr) => {
+        const output = stdout || "(PHP script produced no output)";
+        const executionError = error
+          ? `<h2>PHP execution failed</h2><pre>${escapeHtml(stderr || error.message)}</pre>`
+          : "";
+
+        res
+          .status(error ? 500 : 200)
+          .type("html")
+          .send(
+            page(
+              filename,
+              `
+<div class="hero">
+    <h1>PHP Output: ${escapeHtml(filename)}</h1>
+    ${executionError}
+    <pre style="white-space:pre-wrap;overflow-wrap:anywhere;">${escapeHtml(output)}</pre>
+    <a class="btn" href="/support/uploads">Back to uploaded files</a>
+</div>
+`
+            )
+          );
+      }
     );
   }
 );

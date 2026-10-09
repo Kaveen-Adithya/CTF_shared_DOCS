@@ -14,8 +14,8 @@ from pathlib import Path
 # C4 SERVER CONFIGURATION
 # ============================================================
 
-SERVER_IP = "10.77.20.10"
-SERVER_INTERFACE = "c4-host"
+SERVER_IP = "127.0.0.1"
+SERVER_INTERFACE = "lo"
 
 SESSION_LIFETIME = 120
 HEARTBEAT_TIMEOUT = 15

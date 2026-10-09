@@ -37,20 +37,6 @@ interface SupportAttachment {
   buffer: Buffer;
 }
 
-function escapeHtml(value: string): string {
-  return value.replace(/[&<>"']/g, (character) => {
-    const entities: Record<string, string> = {
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#39;"
-    };
-
-    return entities[character];
-  });
-}
-
 function safeUploadName(originalName: string): string {
   const baseName = path.posix.basename(originalName.replace(/\\/g, "/"));
   const safeName = baseName

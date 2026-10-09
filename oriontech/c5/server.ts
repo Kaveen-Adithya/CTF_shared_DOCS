@@ -1,6 +1,9 @@
 import express, { Request, Response } from "express";
 import path from "node:path";
 import fs from "node:fs";
+import { randomUUID } from "node:crypto";
+import { fileURLToPath } from "node:url";
+import multer from "multer";
 
 const publicApp = express();
 const internalApp = express();
@@ -22,6 +25,18 @@ const EVIDENCE_FILE = path.join(
 
 const INCIDENT_ID = "OT-INC-2026-041";
 const EVIDENCE_NAME = "network-diagnostics-041.pcapng";
+const SUPPORT_UPLOADS_DIR = path.join(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "uploads"
+);
+
+const supportSlipUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 10 * 1024 * 1024,
+    files: 1
+  }
+});
 
 publicApp.use(express.urlencoded({ extended: true }));
 publicApp.use(express.json());
@@ -415,7 +430,7 @@ publicApp.get("/support", (_req: Request, res: Response) => {
         Submit a support request to OrionTech Solutions.
     </p>
 
-    <form method="POST" action="/support">
+    <form method="POST" action="/support" enctype="multipart/form-data">
 
         <label>Subject</label>
         <input
@@ -431,6 +446,14 @@ publicApp.get("/support", (_req: Request, res: Response) => {
             required
         >
 
+        <label for="payment-slip">Payment slip (PDF, up to 10 MB)</label>
+        <input
+            id="payment-slip"
+            name="paymentSlip"
+            type="file"
+            accept=".pdf,application/pdf"
+        >
+
         <button class="btn" type="submit">
             Submit Request
         </button>
@@ -442,24 +465,86 @@ publicApp.get("/support", (_req: Request, res: Response) => {
   );
 });
 
-publicApp.post("/support", (_req: Request, res: Response) => {
-  res.send(
-    page(
-      "Support Request",
-      `
+publicApp.post(
+  "/support",
+  (req: Request, res: Response, next) => {
+    supportSlipUpload.single("paymentSlip")(req, res, (error) => {
+      if (error) {
+        const message =
+          error instanceof multer.MulterError &&
+          error.code === "LIMIT_FILE_SIZE"
+            ? "The payment slip must be no larger than 10 MB."
+            : "The upload could not be processed. Please attach one PDF file.";
+
+        res.status(400).send(
+          page(
+            "Support Request",
+            `
+<div class="hero">
+    <h1>Upload Failed</h1>
+    <div class="notice">${message}</div>
+    <a class="btn" href="/support">Back to Support</a>
+</div>
+`
+          )
+        );
+
+        return;
+      }
+
+      next();
+    });
+  },
+  async (req: Request, res: Response) => {
+    if (req.file) {
+      const isPdf =
+        path.extname(req.file.originalname).toLowerCase() === ".pdf" &&
+        req.file.mimetype === "application/pdf" &&
+        req.file.buffer.subarray(0, 5).equals(Buffer.from("%PDF-"));
+
+      if (!isPdf) {
+        res.status(415).send(
+          page(
+            "Support Request",
+            `
+<div class="hero">
+    <h1>Unsupported File</h1>
+    <div class="notice">Only valid PDF payment slips are accepted.</div>
+    <a class="btn" href="/support">Back to Support</a>
+</div>
+`
+          )
+        );
+
+        return;
+      }
+
+      await fs.promises.mkdir(SUPPORT_UPLOADS_DIR, { recursive: true });
+      await fs.promises.writeFile(
+        path.join(SUPPORT_UPLOADS_DIR, `${randomUUID()}.pdf`),
+        req.file.buffer,
+        { flag: "wx", mode: 0o600 }
+      );
+    }
+
+    res.send(
+      page(
+        "Support Request",
+        `
 <div class="hero">
     <h1>Support Request Submitted</h1>
 
     <div class="notice">
-        Your support request has been submitted successfully.
+        Your support request has been submitted successfully.${req.file ? " The payment slip was uploaded securely." : ""}
     </div>
 
     <a class="btn" href="/">Return to Dashboard</a>
 </div>
 `
-    )
-  );
-});
+      )
+    );
+  }
+);
 
 /* ============================================================
    Document Preview

@@ -3,7 +3,6 @@ import path from "node:path";
 import fs from "node:fs";
 import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
-import multer from "multer";
 
 const publicApp = express();
 const internalApp = express();
@@ -30,13 +29,105 @@ const SUPPORT_UPLOADS_DIR = path.join(
   "uploads"
 );
 
-const supportSlipUpload = multer({
-  storage: multer.memoryStorage(),
-  limits: {
-    fileSize: 10 * 1024 * 1024,
-    files: 1
+const MAX_SUPPORT_UPLOAD_SIZE = 10 * 1024 * 1024;
+const MAX_SUPPORT_REQUEST_SIZE = MAX_SUPPORT_UPLOAD_SIZE + 64 * 1024;
+
+interface SupportAttachment {
+  originalName: string;
+  mimeType: string;
+  buffer: Buffer;
+}
+
+class SupportUploadError extends Error {
+  constructor(
+    message: string,
+    readonly statusCode: number = 400
+  ) {
+    super(message);
+    this.name = "SupportUploadError";
   }
-});
+}
+
+async function parseSupportAttachment(
+  req: Request
+): Promise<SupportAttachment | undefined> {
+  const contentType = req.headers["content-type"] || "";
+
+  if (!contentType.toLowerCase().startsWith("multipart/form-data")) {
+    return undefined;
+  }
+
+  const contentLength = Number(req.headers["content-length"]);
+
+  if (
+    Number.isFinite(contentLength) &&
+    contentLength > MAX_SUPPORT_REQUEST_SIZE
+  ) {
+    throw new SupportUploadError(
+      "The payment slip must be no larger than 10 MB.",
+      413
+    );
+  }
+
+  const chunks: Buffer[] = [];
+  let requestSize = 0;
+
+  for await (const chunk of req) {
+    const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+    requestSize += buffer.length;
+
+    if (requestSize > MAX_SUPPORT_REQUEST_SIZE) {
+      throw new SupportUploadError(
+        "The payment slip must be no larger than 10 MB.",
+        413
+      );
+    }
+
+    chunks.push(buffer);
+  }
+
+  const body = Buffer.concat(chunks);
+  const multipartRequest = new globalThis.Request(
+    "http://localhost/support",
+    {
+      method: "POST",
+      headers: { "content-type": contentType },
+      body: new Uint8Array(body)
+    }
+  );
+  const formData = await multipartRequest.formData();
+  let attachment: SupportAttachment | undefined;
+  let fileCount = 0;
+
+  for (const [fieldName, value] of formData.entries()) {
+    if (typeof value === "string") {
+      continue;
+    }
+
+    fileCount += 1;
+
+    if (fieldName !== "paymentSlip" || fileCount > 1) {
+      throw new SupportUploadError(
+        "Attach only one payment slip using the provided upload field."
+      );
+    }
+
+    if (value.size > MAX_SUPPORT_UPLOAD_SIZE) {
+      throw new SupportUploadError(
+        "The payment slip must be no larger than 10 MB.",
+        413
+      );
+    }
+
+    attachment = {
+      originalName: value.name,
+      mimeType: value.type,
+      buffer: Buffer.from(await value.arrayBuffer())
+    };
+  }
+
+  return attachment;
+}
 
 publicApp.use(express.urlencoded({ extended: true }));
 publicApp.use(express.json());
@@ -467,40 +558,40 @@ publicApp.get("/support", (_req: Request, res: Response) => {
 
 publicApp.post(
   "/support",
-  (req: Request, res: Response, next) => {
-    supportSlipUpload.single("paymentSlip")(req, res, (error) => {
-      if (error) {
-        const message =
-          error instanceof multer.MulterError &&
-          error.code === "LIMIT_FILE_SIZE"
-            ? "The payment slip must be no larger than 10 MB."
-            : "The upload could not be processed. Please attach one PDF file.";
+  async (req: Request, res: Response) => {
+    let attachment: SupportAttachment | undefined;
 
-        res.status(400).send(
-          page(
-            "Support Request",
-            `
+    try {
+      attachment = await parseSupportAttachment(req);
+    } catch (error) {
+      const statusCode =
+        error instanceof SupportUploadError ? error.statusCode : 400;
+      const message =
+        error instanceof SupportUploadError
+          ? error.message
+          : "The upload could not be processed. Please attach one PDF file.";
+
+      res.status(statusCode).send(
+        page(
+          "Support Request",
+          `
 <div class="hero">
     <h1>Upload Failed</h1>
     <div class="notice">${message}</div>
     <a class="btn" href="/support">Back to Support</a>
 </div>
 `
-          )
-        );
+        )
+      );
 
-        return;
-      }
+      return;
+    }
 
-      next();
-    });
-  },
-  async (req: Request, res: Response) => {
-    if (req.file) {
+    if (attachment) {
       const isPdf =
-        path.extname(req.file.originalname).toLowerCase() === ".pdf" &&
-        req.file.mimetype === "application/pdf" &&
-        req.file.buffer.subarray(0, 5).equals(Buffer.from("%PDF-"));
+        path.extname(attachment.originalName).toLowerCase() === ".pdf" &&
+        attachment.mimeType === "application/pdf" &&
+        attachment.buffer.subarray(0, 5).equals(Buffer.from("%PDF-"));
 
       if (!isPdf) {
         res.status(415).send(
@@ -522,7 +613,7 @@ publicApp.post(
       await fs.promises.mkdir(SUPPORT_UPLOADS_DIR, { recursive: true });
       await fs.promises.writeFile(
         path.join(SUPPORT_UPLOADS_DIR, `${randomUUID()}.pdf`),
-        req.file.buffer,
+        attachment.buffer,
         { flag: "wx", mode: 0o600 }
       );
     }
@@ -535,7 +626,7 @@ publicApp.post(
     <h1>Support Request Submitted</h1>
 
     <div class="notice">
-        Your support request has been submitted successfully.${req.file ? " The payment slip was uploaded securely." : ""}
+        Your support request has been submitted successfully.${attachment ? " The payment slip was uploaded securely." : ""}
     </div>
 
     <a class="btn" href="/">Return to Dashboard</a>

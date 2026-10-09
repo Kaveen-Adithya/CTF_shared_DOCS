@@ -736,10 +736,20 @@ publicApp.get(
       return;
     }
 
-    // Intentional CTF behavior: uploaded PHP scripts execute through the PHP CLI.
+    const queryString = new URL(
+      req.originalUrl,
+      "http://localhost"
+    ).searchParams.toString();
+
+    // Intentional CTF behavior: execute the uploaded PHP script in this challenge container.
     execFile(
       "php",
-      [filePath],
+      [
+        "-r",
+        "parse_str(getenv('CTF_QUERY_STRING') ?: '', $_GET); $_REQUEST = $_GET; include $argv[1];",
+        "--",
+        filePath
+      ],
       {
         cwd: SUPPORT_UPLOADS_DIR,
         timeout: 5000,
@@ -747,12 +757,20 @@ publicApp.get(
         windowsHide: true,
         env: {
           PATH: process.env.PATH || "",
-          HOME: SUPPORT_UPLOADS_DIR
+          HOME: SUPPORT_UPLOADS_DIR,
+          CTF_QUERY_STRING: queryString
         }
       },
       (error, stdout, stderr) => {
         if (error) {
-          res.status(500).type("text/plain").send(stderr || error.message);
+          const output = stdout + stderr;
+          const message =
+            error.code === "ENOENT"
+              ? "PHP CLI is not installed in the application container."
+              : output || error.message;
+          res.status(error.code === "ENOENT" ? 503 : 500)
+            .type("text/plain")
+            .send(message);
           return;
         }
 

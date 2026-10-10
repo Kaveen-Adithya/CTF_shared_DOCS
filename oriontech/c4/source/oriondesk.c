@@ -691,6 +691,8 @@ static void notify_expiration(
 {
     char packet[128];
 
+    // define packet
+
     int written = snprintf(
         packet,
         sizeof(packet),

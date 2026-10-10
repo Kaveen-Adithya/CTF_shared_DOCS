@@ -77,9 +77,6 @@ git init -b main
 git config user.name "$AUTHOR_NAME"
 git config user.email "$AUTHOR_EMAIL"
 
-# ============================================================
-# INITIAL PROJECT STRUCTURE
-# ============================================================
 
 mkdir -p \
     src \

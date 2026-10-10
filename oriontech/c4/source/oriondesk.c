@@ -630,6 +630,8 @@ static int establish_session(
         return -1;
     }
 
+    //create session token
+
     strncpy(
         session_token,
         token,

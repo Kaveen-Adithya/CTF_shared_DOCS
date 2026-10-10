@@ -9,7 +9,7 @@ mkdir -p "$OUT"
 
 echo "[+] Generating shared RSA prime..."
 
-# Generate the a 1024-bit RSA key containing the shared prime.
+# Generate the  1024-bit RSA key containing the shared prime.
 openssl genrsa -3 1024 > shared-base.pem 2>/dev/null
 
 echo "[+] Extracting RSA parameters..."
